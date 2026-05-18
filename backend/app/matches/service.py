@@ -13,6 +13,7 @@ from app.errors import BadRequest, Conflict, Forbidden, NotFound
 from app.matches.dedup import find_duplicate
 from app.matches.schemas import MatchSubmit
 from app.matches.validators import match_winner
+from app.rating.service import apply_match_rating
 from app.players.service import get_by_firebase_uid
 from app.push import fcm
 
@@ -158,3 +159,47 @@ async def load_games(
         .order_by(MatchGame.game_no)
     )
     return list(res.scalars().all())
+
+
+async def confirm_match(
+    session: AsyncSession, ident: FirebaseIdentity, match_id: uuid.UUID
+) -> Match:
+    me = await get_by_firebase_uid(session, ident.uid)
+    if not me:
+        raise NotFound("player not found", code="player_not_found")
+
+    match = await load_match(session, match_id)
+    if match.status not in ("pending",):
+        raise Conflict(f"match is {match.status}", code="not_pending")
+
+    parts = await load_participants(session, match.id)
+    my_row = next((mp for mp, p in parts if p.id == me.id), None)
+    if my_row is None:
+        raise Forbidden("not a participant", code="not_a_participant")
+
+    submitter_team = next(mp.team for mp, p in parts if mp.is_submitter)
+    if my_row.team == submitter_team:
+        my_row.confirmed_at = my_row.confirmed_at or datetime.now(UTC)
+        await session.commit()
+        return match
+
+    my_row.confirmed_at = my_row.confirmed_at or datetime.now(UTC)
+
+    games_rows = await load_games(session, match.id)
+    games = [(g.team1_points, g.team2_points) for g in games_rows]
+    winning_team = match_winner(games)
+
+    match.status = "validated"
+    match.validated_at = datetime.now(UTC)
+    await apply_match_rating(session, match, winning_team)
+    await session.commit()
+
+    for mp, p in parts:
+        await fcm.send_to_uid(
+            p.firebase_uid,
+            title="Match validated",
+            body="Your rating has been updated.",
+            data={"match_id": str(match.id), "kind": "match_validated"},
+        )
+
+    return match

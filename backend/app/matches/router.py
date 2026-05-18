@@ -75,3 +75,10 @@ async def get(match_id: uuid.UUID, session: DbSession,
               _ident: CurrentIdentity) -> MatchOut:
     m = await service.load_match(session, match_id)
     return await _serialize(session, m)
+
+
+@router.post("/{match_id}/confirm", response_model=MatchOut)
+async def confirm(match_id: uuid.UUID, session: DbSession,
+                  ident: CurrentIdentity) -> MatchOut:
+    m = await service.confirm_match(session, ident, match_id)
+    return await _serialize(session, m)
