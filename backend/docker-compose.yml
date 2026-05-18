@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: rally
       POSTGRES_DB: rally
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - rally_pg:/var/lib/postgresql/data
     healthcheck:
@@ -24,6 +24,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://rally:rally@postgres:5432/rally
       ENV: dev
       INTERNAL_SECRET: dev-internal-secret-change-me
+      PYTHONPATH: /app
     ports:
       - "8000:8000"
     command: >
