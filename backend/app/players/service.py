@@ -1,10 +1,11 @@
 from __future__ import annotations
 import uuid
+from datetime import datetime, timedelta, UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.firebase import FirebaseIdentity
-from app.db.models import Player, PlayerRating
+from app.db.models import Match, MatchParticipant, Player, PlayerRating, RatingEvent
 from app.errors import Conflict, NotFound
 from app.players.schemas import PlayerCreate, PlayerUpdate
 
@@ -73,5 +74,35 @@ async def load_ratings(
 ) -> list[PlayerRating]:
     res = await session.execute(
         select(PlayerRating).where(PlayerRating.player_id == player_id)
+    )
+    return list(res.scalars().all())
+
+
+async def list_my_matches(
+    session: AsyncSession, player_id: uuid.UUID, status: str | None = None
+) -> list[Match]:
+    stmt = (
+        select(Match)
+        .join(MatchParticipant, MatchParticipant.match_id == Match.id)
+        .where(MatchParticipant.player_id == player_id)
+        .order_by(Match.played_at.desc())
+    )
+    if status:
+        stmt = stmt.where(Match.status == status)
+    res = await session.execute(stmt)
+    return list(res.scalars().all())
+
+
+async def rating_history(
+    session: AsyncSession, player_id: uuid.UUID, days: int = 90
+) -> list[RatingEvent]:
+    since = datetime.now(UTC) - timedelta(days=days)
+    res = await session.execute(
+        select(RatingEvent)
+        .where(
+            (RatingEvent.player_id == player_id)
+            & (RatingEvent.created_at >= since)
+        )
+        .order_by(RatingEvent.created_at.asc())
     )
     return list(res.scalars().all())
