@@ -15,5 +15,20 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://rally:rally@postgres:5432/rally
+      ENV: dev
+      INTERNAL_SECRET: dev-internal-secret-change-me
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
 volumes:
   rally_pg:
