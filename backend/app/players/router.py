@@ -6,7 +6,24 @@ from app.deps import CurrentIdentity, DbSession
 from app.matches.router import _serialize as _serialize_match
 from app.matches.schemas import MatchOut
 from app.players import service
-from app.players.schemas import PlayerCreate, PlayerOut, PlayerUpdate, RatingOut
+from app.players.schemas import (
+    OverallOut, PlayerCreate, PlayerOut, PlayerUpdate, RatingOut,
+)
+
+# Min total matches across both formats to compute an overall.
+_OVERALL_MIN_MATCHES = 5
+
+
+def _compute_overall(ratings) -> OverallOut:
+    """Match-count weighted average of singles + doubles ratings."""
+    total_matches = sum(r.matches_played for r in ratings)
+    if total_matches < _OVERALL_MIN_MATCHES:
+        return OverallOut(rating=None, matches_played=total_matches)
+    weighted = sum(r.rating * r.matches_played for r in ratings)
+    return OverallOut(
+        rating=weighted / total_matches,
+        matches_played=total_matches,
+    )
 
 router = APIRouter(prefix="/players", tags=["players"])
 
@@ -24,6 +41,7 @@ def _serialize(player, ratings) -> PlayerOut:
                       matches_played=r.matches_played)
             for r in ratings
         ],
+        overall=_compute_overall(ratings),
     )
 
 

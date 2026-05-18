@@ -1,14 +1,27 @@
+"""Rating service: applies Glicko-2 updates on match validation.
+
+Engine details:
+- Ratings stored on Glicko-2 native scale (1500 mean, 350 max RD).
+- Singles: standard Glicko-2 between two players.
+- Doubles: each player updated as if they played 1v1 vs the opposing team
+  average rating (RD via quadratic mean).
+- The final rating *delta* is scaled by a multiplicative
+  margin/length factor (see ``app.rating.adjustments``) so blowouts move
+  ratings more than nail-biters and shorter games move them less.
+- Ratings floor at ``settings.rating_floor`` (default 100).
+"""
 from __future__ import annotations
+import math
 import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db.models import (
-    Match, MatchParticipant, PlayerRating, RatingEvent,
+    Match, MatchGame, MatchParticipant, PlayerRating, RatingEvent,
 )
-from app.rating.glicko2 import update as glicko_update
-from app.rating.scale import from_display, to_display
-from app.rating.doubles import carry_scaler
+from app.rating.adjustments import match_adjustment
+from app.rating.glicko2 import Rating, update as glicko_update
 
 
 async def _load_participants(
@@ -31,11 +44,30 @@ async def _load_rating(
     return res.scalar_one()
 
 
+async def _load_games(
+    session: AsyncSession, match_id: uuid.UUID
+) -> list[MatchGame]:
+    res = await session.execute(
+        select(MatchGame)
+        .where(MatchGame.match_id == match_id)
+        .order_by(MatchGame.game_no)
+    )
+    return list(res.scalars().all())
+
+
+def _floor(rating: float) -> float:
+    return max(settings.rating_floor, rating)
+
+
 async def apply_singles_update(
     session: AsyncSession, match_id: uuid.UUID, winning_team: int
 ) -> None:
     parts = await _load_participants(session, match_id)
     assert len(parts) == 2, "singles must have exactly 2 participants"
+
+    games_rows = await _load_games(session, match_id)
+    games = [(g.team1_points, g.team2_points) for g in games_rows]
+    mult = match_adjustment(games, winning_team)
 
     by_team = {p.team: p for p in parts}
     ratings = {
@@ -50,18 +82,20 @@ async def apply_singles_update(
         r_opp = ratings[opp.player_id]
         score = 1.0 if winning_team == me_team else 0.0
 
-        g_me = from_display(r_me.rating, r_me.rd, r_me.volatility)
-        g_opp = from_display(r_opp.rating, r_opp.rd, r_opp.volatility)
+        g_me = Rating(r_me.rating, r_me.rd, r_me.volatility)
+        g_opp = Rating(r_opp.rating, r_opp.rd, r_opp.volatility)
         new = glicko_update(g_me, [g_opp], [score])
-        new_rating, new_rd = to_display(new.rating, new.rd)
+
+        delta = new.rating - r_me.rating
+        new_rating = _floor(r_me.rating + delta * mult)
 
         session.add(RatingEvent(
             player_id=me.player_id, match_id=match_id, format="S",
             rating_before=r_me.rating, rating_after=new_rating,
-            rd_before=r_me.rd, rd_after=new_rd,
+            rd_before=r_me.rd, rd_after=new.rd,
         ))
         r_me.rating = new_rating
-        r_me.rd = new_rd
+        r_me.rd = new.rd
         r_me.volatility = new.volatility
         r_me.matches_played += 1
 
@@ -71,6 +105,10 @@ async def apply_doubles_update(
 ) -> None:
     parts = await _load_participants(session, match_id)
     assert len(parts) == 4, "doubles must have exactly 4 participants"
+
+    games_rows = await _load_games(session, match_id)
+    games = [(g.team1_points, g.team2_points) for g in games_rows]
+    mult = match_adjustment(games, winning_team)
 
     teams: dict[int, list[MatchParticipant]] = {1: [], 2: []}
     for p in parts:
@@ -86,9 +124,12 @@ async def apply_doubles_update(
         t: sum(ratings[p.player_id].rating for p in teams[t]) / 2.0
         for t in (1, 2)
     }
+    # Quadratic mean for opposing-team RD: sqrt((rd1² + rd2²) / 2).
     team_rd = {
-        t: ( (ratings[teams[t][0].player_id].rd ** 2
-              + ratings[teams[t][1].player_id].rd ** 2) / 2.0 ) ** 0.5
+        t: math.sqrt(
+            (ratings[teams[t][0].player_id].rd ** 2
+             + ratings[teams[t][1].player_id].rd ** 2) / 2.0
+        )
         for t in (1, 2)
     }
 
@@ -96,22 +137,20 @@ async def apply_doubles_update(
         score = 1.0 if winning_team == t else 0.0
         for p in teams[t]:
             r = ratings[p.player_id]
-            g_me = from_display(r.rating, r.rd, r.volatility)
-            g_opp = from_display(team_avg[opp_t], team_rd[opp_t], 0.06)
+            g_me = Rating(r.rating, r.rd, r.volatility)
+            g_opp = Rating(team_avg[opp_t], team_rd[opp_t], settings.initial_volatility)
             new = glicko_update(g_me, [g_opp], [score])
-            new_rating, new_rd = to_display(new.rating, new.rd)
 
-            base_delta = new_rating - r.rating
-            scaler = carry_scaler(r.rating, team_avg[t])
-            final_rating = r.rating + base_delta * scaler
+            delta = new.rating - r.rating
+            new_rating = _floor(r.rating + delta * mult)
 
             session.add(RatingEvent(
                 player_id=p.player_id, match_id=match_id, format="D",
-                rating_before=r.rating, rating_after=final_rating,
-                rd_before=r.rd, rd_after=new_rd,
+                rating_before=r.rating, rating_after=new_rating,
+                rd_before=r.rd, rd_after=new.rd,
             ))
-            r.rating = final_rating
-            r.rd = new_rd
+            r.rating = new_rating
+            r.rd = new.rd
             r.volatility = new.volatility
             r.matches_played += 1
 
@@ -123,3 +162,18 @@ async def apply_match_rating(
         await apply_singles_update(session, match.id, winning_team)
     else:
         await apply_doubles_update(session, match.id, winning_team)
+
+
+async def age_rd_for_inactivity(
+    session: AsyncSession, player_id: uuid.UUID, fmt: str, periods: int
+) -> None:
+    """Inflate a player's RD to reflect missed rating periods (days).
+
+    Formula: phi' = sqrt(phi² + n * sigma²), capped at ``initial_rd``.
+    Does NOT change the rating itself — only confidence in it.
+    """
+    pr = await _load_rating(session, player_id, fmt)
+    phi = pr.rd / 173.7178
+    sigma = pr.volatility
+    phi_new = math.sqrt(phi * phi + periods * sigma * sigma) * 173.7178
+    pr.rd = min(settings.initial_rd, phi_new)

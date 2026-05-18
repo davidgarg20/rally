@@ -9,4 +9,12 @@ class Settings(BaseSettings):
     env: str = "dev"
     log_level: str = "INFO"
 
+    # Rating engine tuning. Higher beta_margin = blowouts swing ratings more.
+    # reference_points anchors the length factor; 21 = standard badminton game.
+    beta_margin: float = 0.7
+    reference_points: int = 21
+    rating_floor: float = 100.0
+    initial_rd: float = 350.0
+    initial_volatility: float = 0.06
+
 settings = Settings()

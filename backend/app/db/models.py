@@ -39,8 +39,8 @@ class PlayerRating(Base):
         UUID(as_uuid=True), ForeignKey("players.id"), primary_key=True
     )
     format: Mapped[str] = mapped_column(String, primary_key=True)
-    rating: Mapped[float] = mapped_column(Double, nullable=False, default=3.5)
-    rd: Mapped[float] = mapped_column(Double, nullable=False, default=1.2)
+    rating: Mapped[float] = mapped_column(Double, nullable=False, default=1500.0)
+    rd: Mapped[float] = mapped_column(Double, nullable=False, default=350.0)
     volatility: Mapped[float] = mapped_column(Double, nullable=False, default=0.06)
     matches_played: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_at: Mapped[datetime] = mapped_column(

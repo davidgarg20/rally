@@ -20,6 +20,11 @@ class RatingOut(BaseModel):
     rd: float
     matches_played: int
 
+class OverallOut(BaseModel):
+    """Computed weighted average. Null when total matches < min threshold."""
+    rating: float | None
+    matches_played: int
+
 class PlayerOut(BaseModel):
     id: str
     phone_e164: str
@@ -28,3 +33,4 @@ class PlayerOut(BaseModel):
     dob: date | None
     home_city: str
     ratings: list[RatingOut]
+    overall: OverallOut
