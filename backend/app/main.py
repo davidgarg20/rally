@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from app.deps import CurrentIdentity
 from app.errors import install_handlers
+from app.players.router import router as players_router
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Rally API", version="0.1.0")
     install_handlers(app)
+    app.include_router(players_router)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
