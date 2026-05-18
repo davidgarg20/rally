@@ -57,7 +57,10 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           Text(p.displayName,
                               style: Theme.of(context).textTheme.headlineMedium),
-                          Text(p.phoneE164),
+                          Text('@${p.username}',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          Text(p.phoneE164,
+                              style: Theme.of(context).textTheme.bodySmall),
                           const SizedBox(height: 8),
                           Text(
                             p.overall.rating == null

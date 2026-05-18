@@ -10,6 +10,7 @@ _$ParticipantImpl _$$ParticipantImplFromJson(Map<String, dynamic> json) =>
     _$ParticipantImpl(
       playerId: json['player_id'] as String?,
       phoneE164: json['phone_e164'] as String,
+      username: json['username'] as String?,
       displayName: json['display_name'] as String?,
       team: (json['team'] as num).toInt(),
       isSubmitter: json['is_submitter'] as bool,
@@ -21,6 +22,7 @@ Map<String, dynamic> _$$ParticipantImplToJson(_$ParticipantImpl instance) =>
     <String, dynamic>{
       'player_id': instance.playerId,
       'phone_e164': instance.phoneE164,
+      'username': instance.username,
       'display_name': instance.displayName,
       'team': instance.team,
       'is_submitter': instance.isSubmitter,

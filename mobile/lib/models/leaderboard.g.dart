@@ -11,6 +11,7 @@ _$LeaderboardEntryImpl _$$LeaderboardEntryImplFromJson(
     _$LeaderboardEntryImpl(
       rank: (json['rank'] as num).toInt(),
       playerId: json['player_id'] as String,
+      username: json['username'] as String,
       displayName: json['display_name'] as String,
       rating: (json['rating'] as num).toDouble(),
       matchesPlayed: (json['matches_played'] as num).toInt(),
@@ -21,6 +22,7 @@ Map<String, dynamic> _$$LeaderboardEntryImplToJson(
     <String, dynamic>{
       'rank': instance.rank,
       'player_id': instance.playerId,
+      'username': instance.username,
       'display_name': instance.displayName,
       'rating': instance.rating,
       'matches_played': instance.matchesPlayed,

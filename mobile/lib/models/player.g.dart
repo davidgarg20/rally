@@ -42,6 +42,7 @@ Map<String, dynamic> _$$OverallImplToJson(_$OverallImpl instance) =>
 _$PlayerImpl _$$PlayerImplFromJson(Map<String, dynamic> json) => _$PlayerImpl(
       id: json['id'] as String,
       phoneE164: json['phone_e164'] as String,
+      username: json['username'] as String,
       displayName: json['display_name'] as String,
       gender: json['gender'] as String?,
       dob: json['dob'] == null ? null : DateTime.parse(json['dob'] as String),
@@ -56,6 +57,7 @@ Map<String, dynamic> _$$PlayerImplToJson(_$PlayerImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'phone_e164': instance.phoneE164,
+      'username': instance.username,
       'display_name': instance.displayName,
       'gender': instance.gender,
       'dob': instance.dob?.toIso8601String(),

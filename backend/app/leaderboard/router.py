@@ -15,6 +15,7 @@ MIN_MATCHES = 5
 class LeaderboardEntry(BaseModel):
     rank: int
     player_id: str
+    username: str
     display_name: str
     rating: float
     matches_played: int
@@ -43,12 +44,13 @@ async def get_leaderboard(
     stmt = (
         select(
             Player.id.label("player_id"),
+            Player.username,
             Player.display_name,
             overall,
             total_matches.label("total_matches"),
         )
         .join(PlayerRating, PlayerRating.player_id == Player.id)
-        .group_by(Player.id, Player.display_name)
+        .group_by(Player.id, Player.username, Player.display_name)
         .having(total_matches >= MIN_MATCHES)
         .order_by(overall.desc())
         .limit(limit)
@@ -61,10 +63,11 @@ async def get_leaderboard(
         LeaderboardEntry(
             rank=i + 1,
             player_id=str(pid),
+            username=uname,
             display_name=name,
             rating=float(rating),
             matches_played=int(matches),
         )
-        for i, (pid, name, rating, matches) in enumerate(rows)
+        for i, (pid, uname, name, rating, matches) in enumerate(rows)
     ]
     return LeaderboardResponse(gender=gender, entries=entries)

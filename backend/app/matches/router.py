@@ -27,6 +27,7 @@ async def _serialize(session, match) -> MatchOut:
         participants.append(ParticipantOut(
             player_id=str(p.id),
             phone_e164=p.phone_e164,
+            username=p.username,
             display_name=p.display_name,
             team=mp.team,
             is_submitter=mp.is_submitter,
@@ -37,6 +38,7 @@ async def _serialize(session, match) -> MatchOut:
         participants.append(ParticipantOut(
             player_id=None,
             phone_e164=inv.phone_e164,
+            username=None,
             display_name=None,
             team=inv.team,
             is_submitter=False,

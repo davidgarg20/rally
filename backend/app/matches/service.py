@@ -37,12 +37,45 @@ def _check_team_shape(fmt: str, t1: list[str], t2: list[str]) -> None:
         )
 
 
+async def _resolve_identifiers(
+    session: AsyncSession, identifiers: list[str]
+) -> list[str]:
+    """Normalize a list of phone-or-username strings into phones.
+
+    - If an entry starts with '+', it's a phone — passed through.
+    - Otherwise it's a username — looked up in the DB. If found, replaced
+      with the player's phone. If not found, BadRequest.
+    """
+    resolved: list[str] = []
+    for ident in identifiers:
+        stripped = ident.strip().lstrip("@")
+        if stripped.startswith("+") or stripped.replace(" ", "").isdigit():
+            # phone (E.164 or raw digits)
+            resolved.append(ident.strip())
+            continue
+        # username path
+        from app.players.service import get_by_username
+        player = await get_by_username(session, stripped)
+        if not player:
+            raise BadRequest(
+                f"unknown player: @{stripped}", code="unknown_username",
+            )
+        resolved.append(player.phone_e164)
+    return resolved
+
+
 async def submit_match(
     session: AsyncSession, ident: FirebaseIdentity, body: MatchSubmit
 ) -> Match:
     submitter = await get_by_firebase_uid(session, ident.uid)
     if not submitter:
         raise NotFound("submitter player not found", code="player_not_found")
+
+    # Allow opponents specified as @username or +91phone.
+    body = body.model_copy(update={
+        "team1_phones": await _resolve_identifiers(session, body.team1_phones),
+        "team2_phones": await _resolve_identifiers(session, body.team2_phones),
+    })
 
     _check_team_shape(body.format, body.team1_phones, body.team2_phones)
 

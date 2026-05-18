@@ -37,6 +37,7 @@ class Player with _$Player {
   const factory Player({
     required String id,
     @JsonKey(name: 'phone_e164') required String phoneE164,
+    required String username,
     @JsonKey(name: 'display_name') required String displayName,
     String? gender,
     DateTime? dob,

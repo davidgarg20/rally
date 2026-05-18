@@ -20,6 +20,7 @@ class Participant with _$Participant {
   const factory Participant({
     @JsonKey(name: 'player_id') String? playerId,
     @JsonKey(name: 'phone_e164') required String phoneE164,
+    String? username,
     @JsonKey(name: 'display_name') String? displayName,
     required int team,
     @JsonKey(name: 'is_submitter') required bool isSubmitter,

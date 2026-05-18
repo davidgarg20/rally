@@ -19,6 +19,15 @@ async def get_by_firebase_uid(
     return res.scalar_one_or_none()
 
 
+async def get_by_username(
+    session: AsyncSession, username: str
+) -> Player | None:
+    res = await session.execute(
+        select(Player).where(Player.username == username.lower())
+    )
+    return res.scalar_one_or_none()
+
+
 async def create_player(
     session: AsyncSession, ident: FirebaseIdentity, data: PlayerCreate
 ) -> Player:
@@ -26,8 +35,13 @@ async def create_player(
     if existing:
         raise Conflict("player already exists", code="player_exists")
 
+    username = data.username.lower()
+    if await get_by_username(session, username):
+        raise Conflict("username taken", code="username_taken")
+
     p = Player(
         phone_e164=ident.phone_e164,
+        username=username,
         display_name=data.display_name,
         gender=data.gender,
         dob=data.dob,

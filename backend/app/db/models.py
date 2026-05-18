@@ -16,6 +16,7 @@ class Player(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     phone_e164: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String, nullable=False)
     gender: Mapped[str | None] = mapped_column(String, nullable=True)
     dob: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -27,6 +28,10 @@ class Player(Base):
 
     __table_args__ = (
         CheckConstraint("gender in ('M','F','O') or gender is null", name="player_gender_chk"),
+        CheckConstraint(
+            "username ~ '^[a-z][a-z0-9_]{2,19}$'",
+            name="player_username_format_chk",
+        ),
     )
 
     ratings: Mapped[list["PlayerRating"]] = relationship(back_populates="player")

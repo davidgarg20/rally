@@ -42,6 +42,7 @@ random.seed(42)
 @dataclass
 class FakePlayer:
     name: str
+    username: str
     phone: str
     gender: str
     # "tier" is just for picking who wins more often. Not stored anywhere.
@@ -50,20 +51,20 @@ class FakePlayer:
 
 # 14 plausible Bangalore badminton-club names, distributed across 4 skill tiers.
 FAKE_PLAYERS = [
-    FakePlayer("Asha Iyer", "+919900100101", "F", 3),
-    FakePlayer("Rohan Kulkarni", "+919900100102", "M", 4),
-    FakePlayer("Meera Nair", "+919900100103", "F", 2),
-    FakePlayer("Karthik Reddy", "+919900100104", "M", 3),
-    FakePlayer("Sneha Bhat", "+919900100105", "F", 4),
-    FakePlayer("Arjun Menon", "+919900100106", "M", 2),
-    FakePlayer("Priya Sharma", "+919900100107", "F", 3),
-    FakePlayer("Vikram Rao", "+919900100108", "M", 4),
-    FakePlayer("Divya Krishnan", "+919900100109", "F", 2),
-    FakePlayer("Anand Pillai", "+919900100110", "M", 3),
-    FakePlayer("Lakshmi Gowda", "+919900100111", "F", 1),
-    FakePlayer("Suresh Hegde", "+919900100112", "M", 2),
-    FakePlayer("Neha Joshi", "+919900100113", "F", 3),
-    FakePlayer("Aditya Shetty", "+919900100114", "M", 4),
+    FakePlayer("Asha Iyer", "asha_i", "+919900100101", "F", 3),
+    FakePlayer("Rohan Kulkarni", "rohan_k", "+919900100102", "M", 4),
+    FakePlayer("Meera Nair", "meera_n", "+919900100103", "F", 2),
+    FakePlayer("Karthik Reddy", "karthik_r", "+919900100104", "M", 3),
+    FakePlayer("Sneha Bhat", "sneha_b", "+919900100105", "F", 4),
+    FakePlayer("Arjun Menon", "arjun_m", "+919900100106", "M", 2),
+    FakePlayer("Priya Sharma", "priya_s", "+919900100107", "F", 3),
+    FakePlayer("Vikram Rao", "vikram_r", "+919900100108", "M", 4),
+    FakePlayer("Divya Krishnan", "divya_k", "+919900100109", "F", 2),
+    FakePlayer("Anand Pillai", "anand_p", "+919900100110", "M", 3),
+    FakePlayer("Lakshmi Gowda", "lakshmi_g", "+919900100111", "F", 1),
+    FakePlayer("Suresh Hegde", "suresh_h", "+919900100112", "M", 2),
+    FakePlayer("Neha Joshi", "neha_j", "+919900100113", "F", 3),
+    FakePlayer("Aditya Shetty", "aditya_s", "+919900100114", "M", 4),
 ]
 
 
@@ -122,6 +123,7 @@ def signup_player(client: httpx.Client, fp: FakePlayer) -> bool:
     r = client.post(
         "/players",
         json={
+            "username": fp.username,
             "display_name": fp.name,
             "gender": fp.gender,
             "home_city": "BLR",
@@ -206,7 +208,7 @@ def confirm_match(client: httpx.Client, match_id: str, confirmer: FakePlayer) ->
 
 def main() -> None:
     # Real user, with their tier set so matches against them are realistic.
-    real_user = FakePlayer("David Garg", REAL_USER_PHONE, "M", 3)
+    real_user = FakePlayer("David Garg", "david", REAL_USER_PHONE, "M", 3)
 
     with httpx.Client(base_url=API_BASE, timeout=15.0) as client:
         print(f"\n→ API: {API_BASE}")

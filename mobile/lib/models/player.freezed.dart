@@ -414,6 +414,7 @@ mixin _$Player {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'phone_e164')
   String get phoneE164 => throw _privateConstructorUsedError;
+  String get username => throw _privateConstructorUsedError;
   @JsonKey(name: 'display_name')
   String get displayName => throw _privateConstructorUsedError;
   String? get gender => throw _privateConstructorUsedError;
@@ -440,6 +441,7 @@ abstract class $PlayerCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'phone_e164') String phoneE164,
+      String username,
       @JsonKey(name: 'display_name') String displayName,
       String? gender,
       DateTime? dob,
@@ -467,6 +469,7 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
   $Res call({
     Object? id = null,
     Object? phoneE164 = null,
+    Object? username = null,
     Object? displayName = null,
     Object? gender = freezed,
     Object? dob = freezed,
@@ -482,6 +485,10 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
       phoneE164: null == phoneE164
           ? _value.phoneE164
           : phoneE164 // ignore: cast_nullable_to_non_nullable
+              as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
               as String,
       displayName: null == displayName
           ? _value.displayName
@@ -531,6 +538,7 @@ abstract class _$$PlayerImplCopyWith<$Res> implements $PlayerCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'phone_e164') String phoneE164,
+      String username,
       @JsonKey(name: 'display_name') String displayName,
       String? gender,
       DateTime? dob,
@@ -557,6 +565,7 @@ class __$$PlayerImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? phoneE164 = null,
+    Object? username = null,
     Object? displayName = null,
     Object? gender = freezed,
     Object? dob = freezed,
@@ -572,6 +581,10 @@ class __$$PlayerImplCopyWithImpl<$Res>
       phoneE164: null == phoneE164
           ? _value.phoneE164
           : phoneE164 // ignore: cast_nullable_to_non_nullable
+              as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
               as String,
       displayName: null == displayName
           ? _value.displayName
@@ -607,6 +620,7 @@ class _$PlayerImpl implements _Player {
   const _$PlayerImpl(
       {required this.id,
       @JsonKey(name: 'phone_e164') required this.phoneE164,
+      required this.username,
       @JsonKey(name: 'display_name') required this.displayName,
       this.gender,
       this.dob,
@@ -623,6 +637,8 @@ class _$PlayerImpl implements _Player {
   @override
   @JsonKey(name: 'phone_e164')
   final String phoneE164;
+  @override
+  final String username;
   @override
   @JsonKey(name: 'display_name')
   final String displayName;
@@ -646,7 +662,7 @@ class _$PlayerImpl implements _Player {
 
   @override
   String toString() {
-    return 'Player(id: $id, phoneE164: $phoneE164, displayName: $displayName, gender: $gender, dob: $dob, homeCity: $homeCity, ratings: $ratings, overall: $overall)';
+    return 'Player(id: $id, phoneE164: $phoneE164, username: $username, displayName: $displayName, gender: $gender, dob: $dob, homeCity: $homeCity, ratings: $ratings, overall: $overall)';
   }
 
   @override
@@ -657,6 +673,8 @@ class _$PlayerImpl implements _Player {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.phoneE164, phoneE164) ||
                 other.phoneE164 == phoneE164) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
             (identical(other.gender, gender) || other.gender == gender) &&
@@ -673,6 +691,7 @@ class _$PlayerImpl implements _Player {
       runtimeType,
       id,
       phoneE164,
+      username,
       displayName,
       gender,
       dob,
@@ -700,6 +719,7 @@ abstract class _Player implements Player {
   const factory _Player(
       {required final String id,
       @JsonKey(name: 'phone_e164') required final String phoneE164,
+      required final String username,
       @JsonKey(name: 'display_name') required final String displayName,
       final String? gender,
       final DateTime? dob,
@@ -714,6 +734,8 @@ abstract class _Player implements Player {
   @override
   @JsonKey(name: 'phone_e164')
   String get phoneE164;
+  @override
+  String get username;
   @override
   @JsonKey(name: 'display_name')
   String get displayName;

@@ -13,16 +13,47 @@ class PlayersApi {
   final ApiClient _client;
 
   Future<Result<Player, AppError>> create({
+    required String username,
     required String displayName, String? gender, DateTime? dob,
     String homeCity = 'BLR',
   }) => _wrap(() async {
         final res = await _client.dio.post('/players', data: {
+          'username': username,
           'display_name': displayName,
           if (gender != null) 'gender': gender,
           if (dob != null) 'dob': dob.toIso8601String().substring(0, 10),
           'home_city': homeCity,
         });
         return Player.fromJson(res.data as Map<String, dynamic>);
+      });
+
+  Future<Result<List<({String id, String username, String displayName})>, AppError>>
+      searchPlayers(String query) => _wrap(() async {
+        final res = await _client.dio.get(
+          '/players/search',
+          queryParameters: {'q': query, 'limit': 10},
+        );
+        return (res.data as List)
+            .map((e) => (
+                  id: e['id'] as String,
+                  username: e['username'] as String,
+                  displayName: e['display_name'] as String,
+                ))
+            .toList();
+      });
+
+  Future<Result<({bool available, String? reason}), AppError>> checkUsername(
+    String username,
+  ) => _wrap(() async {
+        final res = await _client.dio.get(
+          '/players/check-username',
+          queryParameters: {'u': username},
+        );
+        final data = res.data as Map<String, dynamic>;
+        return (
+          available: data['available'] as bool,
+          reason: data['reason'] as String?,
+        );
       });
 
   Future<Result<Player, AppError>> me() => _wrap(() async {

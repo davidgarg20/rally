@@ -120,6 +120,7 @@ class _MatchViewState extends ConsumerState<_MatchView> {
                     leading: CircleAvatar(child: Text('${p.team}')),
                     title: Text(p.displayName ?? '(invited) ${p.phoneE164}'),
                     subtitle: Text([
+                      if (p.username != null) '@${p.username}',
                       if (p.isSubmitter) 'submitter',
                       if (p.confirmed) 'confirmed',
                       if (p.disputed) 'disputed',

@@ -8,6 +8,7 @@ import 'package:rally/state/pending_matches_provider.dart';
 import 'package:rally/state/recent_matches_provider.dart';
 import 'package:rally/state/session_provider.dart';
 import 'package:rally/ui/screens/log_match/log_match_controller.dart';
+import 'package:rally/ui/widgets/opponent_field.dart';
 import 'package:rally/ui/widgets/score_stepper.dart';
 
 class LogMatchScreen extends ConsumerStatefulWidget {
@@ -25,11 +26,18 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
   final _opp2 = TextEditingController();
   final _venue = TextEditingController();
 
-  String _normalizePhone(String raw) {
-    final digits = raw.replaceAll(RegExp(r'\D'), '');
+  /// Accept a username (@asha) or a phone number. Backend resolves either way.
+  String _normalizeIdentifier(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return s;
+    // Looks like a username if it starts with @ or contains a letter.
+    if (s.startsWith('@')) return s.substring(1).toLowerCase();
+    if (RegExp(r'[a-zA-Z_]').hasMatch(s)) return s.toLowerCase();
+    // Otherwise treat as a phone number.
+    final digits = s.replaceAll(RegExp(r'\D'), '');
     if (digits.length == 10) return '+91$digits';
     if (digits.length == 12 && digits.startsWith('91')) return '+$digits';
-    return raw.trim();
+    return s;
   }
 
   Future<void> _submit() async {
@@ -69,10 +77,10 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
           if (_step == 1) {
             ctrl.setTeam(1, s.format == MatchFormat.singles
                 ? []
-                : [_normalizePhone(_teammate.text)]);
+                : [_normalizeIdentifier(_teammate.text)]);
             ctrl.setTeam(2, s.format == MatchFormat.singles
-                ? [_normalizePhone(_opp1.text)]
-                : [_normalizePhone(_opp1.text), _normalizePhone(_opp2.text)]);
+                ? [_normalizeIdentifier(_opp1.text)]
+                : [_normalizeIdentifier(_opp1.text), _normalizeIdentifier(_opp2.text)]);
           }
           if (_step < 3) {
             setState(() => _step++);
@@ -118,31 +126,12 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (s.format == MatchFormat.doubles)
-                  TextField(
-                    controller: _teammate,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Your teammate (phone)',
-                      prefixText: '+91 ',
-                    ),
-                  ),
+                  OpponentField(controller: _teammate, label: 'Your teammate'),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _opp1,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Opponent (phone)', prefixText: '+91 ',
-                  ),
-                ),
+                OpponentField(controller: _opp1, label: 'Opponent'),
                 if (s.format == MatchFormat.doubles) ...[
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _opp2,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Second opponent (phone)', prefixText: '+91 ',
-                    ),
-                  ),
+                  OpponentField(controller: _opp2, label: 'Second opponent'),
                 ],
               ],
             ),
@@ -152,39 +141,29 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
             isActive: _step >= 2,
             content: Column(
               children: [
-                for (final g in s.games)
-                  Card(
+                // Single-set: just one game. Use first (and only) game in state.
+                Builder(builder: (_) {
+                  final g = s.games.first;
+                  return Card(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Column(
                         children: [
-                          Text('Game ${g.gameNo}',
-                              style: Theme.of(context).textTheme.titleSmall),
                           ScoreStepper(
                             label: 'You',
                             value: g.team1Points,
-                            onChanged: (n) => ctrl.setGame(g.gameNo, n, g.team2Points),
+                            onChanged: (n) => ctrl.setGame(1, n, g.team2Points),
                           ),
                           ScoreStepper(
                             label: 'Opponents',
                             value: g.team2Points,
-                            onChanged: (n) => ctrl.setGame(g.gameNo, g.team1Points, n),
+                            onChanged: (n) => ctrl.setGame(1, g.team1Points, n),
                           ),
-                          if (g.gameNo > 1)
-                            TextButton(
-                              onPressed: () => ctrl.removeGame(g.gameNo),
-                              child: const Text('Remove game'),
-                            ),
                         ],
                       ),
                     ),
-                  ),
-                if (s.games.length < 3)
-                  TextButton.icon(
-                    onPressed: ctrl.addGame,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add another game'),
-                  ),
+                  );
+                }),
               ],
             ),
           ),
@@ -195,7 +174,7 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(s.format == MatchFormat.singles ? 'Singles' : 'Doubles'),
-                Text('Games: ${s.games.map((g) => '${g.team1Points}-${g.team2Points}').join(', ')}'),
+                Text('Score: ${s.games.first.team1Points}-${s.games.first.team2Points}'),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _venue,

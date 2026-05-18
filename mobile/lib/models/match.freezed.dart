@@ -24,6 +24,7 @@ mixin _$Participant {
   String? get playerId => throw _privateConstructorUsedError;
   @JsonKey(name: 'phone_e164')
   String get phoneE164 => throw _privateConstructorUsedError;
+  String? get username => throw _privateConstructorUsedError;
   @JsonKey(name: 'display_name')
   String? get displayName => throw _privateConstructorUsedError;
   int get team => throw _privateConstructorUsedError;
@@ -51,6 +52,7 @@ abstract class $ParticipantCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: 'player_id') String? playerId,
       @JsonKey(name: 'phone_e164') String phoneE164,
+      String? username,
       @JsonKey(name: 'display_name') String? displayName,
       int team,
       @JsonKey(name: 'is_submitter') bool isSubmitter,
@@ -75,6 +77,7 @@ class _$ParticipantCopyWithImpl<$Res, $Val extends Participant>
   $Res call({
     Object? playerId = freezed,
     Object? phoneE164 = null,
+    Object? username = freezed,
     Object? displayName = freezed,
     Object? team = null,
     Object? isSubmitter = null,
@@ -90,6 +93,10 @@ class _$ParticipantCopyWithImpl<$Res, $Val extends Participant>
           ? _value.phoneE164
           : phoneE164 // ignore: cast_nullable_to_non_nullable
               as String,
+      username: freezed == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String?,
       displayName: freezed == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
@@ -125,6 +132,7 @@ abstract class _$$ParticipantImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: 'player_id') String? playerId,
       @JsonKey(name: 'phone_e164') String phoneE164,
+      String? username,
       @JsonKey(name: 'display_name') String? displayName,
       int team,
       @JsonKey(name: 'is_submitter') bool isSubmitter,
@@ -147,6 +155,7 @@ class __$$ParticipantImplCopyWithImpl<$Res>
   $Res call({
     Object? playerId = freezed,
     Object? phoneE164 = null,
+    Object? username = freezed,
     Object? displayName = freezed,
     Object? team = null,
     Object? isSubmitter = null,
@@ -162,6 +171,10 @@ class __$$ParticipantImplCopyWithImpl<$Res>
           ? _value.phoneE164
           : phoneE164 // ignore: cast_nullable_to_non_nullable
               as String,
+      username: freezed == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String?,
       displayName: freezed == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
@@ -192,6 +205,7 @@ class _$ParticipantImpl implements _Participant {
   const _$ParticipantImpl(
       {@JsonKey(name: 'player_id') this.playerId,
       @JsonKey(name: 'phone_e164') required this.phoneE164,
+      this.username,
       @JsonKey(name: 'display_name') this.displayName,
       required this.team,
       @JsonKey(name: 'is_submitter') required this.isSubmitter,
@@ -208,6 +222,8 @@ class _$ParticipantImpl implements _Participant {
   @JsonKey(name: 'phone_e164')
   final String phoneE164;
   @override
+  final String? username;
+  @override
   @JsonKey(name: 'display_name')
   final String? displayName;
   @override
@@ -222,7 +238,7 @@ class _$ParticipantImpl implements _Participant {
 
   @override
   String toString() {
-    return 'Participant(playerId: $playerId, phoneE164: $phoneE164, displayName: $displayName, team: $team, isSubmitter: $isSubmitter, confirmed: $confirmed, disputed: $disputed)';
+    return 'Participant(playerId: $playerId, phoneE164: $phoneE164, username: $username, displayName: $displayName, team: $team, isSubmitter: $isSubmitter, confirmed: $confirmed, disputed: $disputed)';
   }
 
   @override
@@ -234,6 +250,8 @@ class _$ParticipantImpl implements _Participant {
                 other.playerId == playerId) &&
             (identical(other.phoneE164, phoneE164) ||
                 other.phoneE164 == phoneE164) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
             (identical(other.team, team) || other.team == team) &&
@@ -247,8 +265,8 @@ class _$ParticipantImpl implements _Participant {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, playerId, phoneE164, displayName,
-      team, isSubmitter, confirmed, disputed);
+  int get hashCode => Object.hash(runtimeType, playerId, phoneE164, username,
+      displayName, team, isSubmitter, confirmed, disputed);
 
   /// Create a copy of Participant
   /// with the given fields replaced by the non-null parameter values.
@@ -270,6 +288,7 @@ abstract class _Participant implements Participant {
   const factory _Participant(
       {@JsonKey(name: 'player_id') final String? playerId,
       @JsonKey(name: 'phone_e164') required final String phoneE164,
+      final String? username,
       @JsonKey(name: 'display_name') final String? displayName,
       required final int team,
       @JsonKey(name: 'is_submitter') required final bool isSubmitter,
@@ -285,6 +304,8 @@ abstract class _Participant implements Participant {
   @override
   @JsonKey(name: 'phone_e164')
   String get phoneE164;
+  @override
+  String? get username;
   @override
   @JsonKey(name: 'display_name')
   String? get displayName;

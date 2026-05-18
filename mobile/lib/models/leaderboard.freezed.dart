@@ -23,6 +23,7 @@ mixin _$LeaderboardEntry {
   int get rank => throw _privateConstructorUsedError;
   @JsonKey(name: 'player_id')
   String get playerId => throw _privateConstructorUsedError;
+  String get username => throw _privateConstructorUsedError;
   @JsonKey(name: 'display_name')
   String get displayName => throw _privateConstructorUsedError;
   double get rating => throw _privateConstructorUsedError;
@@ -48,6 +49,7 @@ abstract class $LeaderboardEntryCopyWith<$Res> {
   $Res call(
       {int rank,
       @JsonKey(name: 'player_id') String playerId,
+      String username,
       @JsonKey(name: 'display_name') String displayName,
       double rating,
       @JsonKey(name: 'matches_played') int matchesPlayed});
@@ -70,6 +72,7 @@ class _$LeaderboardEntryCopyWithImpl<$Res, $Val extends LeaderboardEntry>
   $Res call({
     Object? rank = null,
     Object? playerId = null,
+    Object? username = null,
     Object? displayName = null,
     Object? rating = null,
     Object? matchesPlayed = null,
@@ -82,6 +85,10 @@ class _$LeaderboardEntryCopyWithImpl<$Res, $Val extends LeaderboardEntry>
       playerId: null == playerId
           ? _value.playerId
           : playerId // ignore: cast_nullable_to_non_nullable
+              as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
               as String,
       displayName: null == displayName
           ? _value.displayName
@@ -110,6 +117,7 @@ abstract class _$$LeaderboardEntryImplCopyWith<$Res>
   $Res call(
       {int rank,
       @JsonKey(name: 'player_id') String playerId,
+      String username,
       @JsonKey(name: 'display_name') String displayName,
       double rating,
       @JsonKey(name: 'matches_played') int matchesPlayed});
@@ -130,6 +138,7 @@ class __$$LeaderboardEntryImplCopyWithImpl<$Res>
   $Res call({
     Object? rank = null,
     Object? playerId = null,
+    Object? username = null,
     Object? displayName = null,
     Object? rating = null,
     Object? matchesPlayed = null,
@@ -142,6 +151,10 @@ class __$$LeaderboardEntryImplCopyWithImpl<$Res>
       playerId: null == playerId
           ? _value.playerId
           : playerId // ignore: cast_nullable_to_non_nullable
+              as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
               as String,
       displayName: null == displayName
           ? _value.displayName
@@ -165,6 +178,7 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
   const _$LeaderboardEntryImpl(
       {required this.rank,
       @JsonKey(name: 'player_id') required this.playerId,
+      required this.username,
       @JsonKey(name: 'display_name') required this.displayName,
       required this.rating,
       @JsonKey(name: 'matches_played') required this.matchesPlayed});
@@ -178,6 +192,8 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
   @JsonKey(name: 'player_id')
   final String playerId;
   @override
+  final String username;
+  @override
   @JsonKey(name: 'display_name')
   final String displayName;
   @override
@@ -188,7 +204,7 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
 
   @override
   String toString() {
-    return 'LeaderboardEntry(rank: $rank, playerId: $playerId, displayName: $displayName, rating: $rating, matchesPlayed: $matchesPlayed)';
+    return 'LeaderboardEntry(rank: $rank, playerId: $playerId, username: $username, displayName: $displayName, rating: $rating, matchesPlayed: $matchesPlayed)';
   }
 
   @override
@@ -199,6 +215,8 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
             (identical(other.rank, rank) || other.rank == rank) &&
             (identical(other.playerId, playerId) ||
                 other.playerId == playerId) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
             (identical(other.rating, rating) || other.rating == rating) &&
@@ -208,8 +226,8 @@ class _$LeaderboardEntryImpl implements _LeaderboardEntry {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, rank, playerId, displayName, rating, matchesPlayed);
+  int get hashCode => Object.hash(runtimeType, rank, playerId, username,
+      displayName, rating, matchesPlayed);
 
   /// Create a copy of LeaderboardEntry
   /// with the given fields replaced by the non-null parameter values.
@@ -232,6 +250,7 @@ abstract class _LeaderboardEntry implements LeaderboardEntry {
   const factory _LeaderboardEntry(
           {required final int rank,
           @JsonKey(name: 'player_id') required final String playerId,
+          required final String username,
           @JsonKey(name: 'display_name') required final String displayName,
           required final double rating,
           @JsonKey(name: 'matches_played') required final int matchesPlayed}) =
@@ -245,6 +264,8 @@ abstract class _LeaderboardEntry implements LeaderboardEntry {
   @override
   @JsonKey(name: 'player_id')
   String get playerId;
+  @override
+  String get username;
   @override
   @JsonKey(name: 'display_name')
   String get displayName;

@@ -100,7 +100,7 @@ class LeaderboardScreen extends ConsumerWidget {
                           ),
                         ),
                         subtitle: Text(
-                          '${e.matchesPlayed} matches',
+                          '@${e.username} · ${e.matchesPlayed} matches',
                           style: RallyText.caption,
                         ),
                         trailing: Text(
