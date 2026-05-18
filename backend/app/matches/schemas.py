@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class GameIn(BaseModel):
-    game_no: int = Field(ge=1, le=5)
+    game_no: int = Field(ge=1, le=1)  # single-set engine: only game 1
     team1_points: int = Field(ge=0, le=30)
     team2_points: int = Field(ge=0, le=30)
 
@@ -15,12 +15,14 @@ class MatchSubmit(BaseModel):
     venue: str | None = None
     team1_phones: list[str]
     team2_phones: list[str]
-    games: list[GameIn]
+    # Single set per match. List preserved for backward compat with mobile schema.
+    games: list[GameIn] = Field(min_length=1, max_length=1)
 
 
 class ParticipantOut(BaseModel):
     player_id: str | None
     phone_e164: str
+    username: str | None
     display_name: str | None
     team: int
     is_submitter: bool

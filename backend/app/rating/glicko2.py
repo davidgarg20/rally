@@ -98,3 +98,34 @@ def update(
         rd=new_phi * GLICKO2_CONST,
         volatility=new_sigma,
     )
+
+
+class Player:
+    """Mutable player wrapper around the pure ``update`` function.
+
+    Mirrors the pyglicko2 interface (``rating``, ``rd``, ``vol``,
+    ``update_player()``). Lets the service layer manipulate state in-place
+    while the actual math stays in the verified pure function above.
+    """
+
+    __slots__ = ("rating", "rd", "vol")
+
+    def __init__(self, rating: float = 1500.0, rd: float = 350.0,
+                 vol: float = 0.06) -> None:
+        self.rating = rating
+        self.rd = rd
+        self.vol = vol
+
+    def update_player(self, ratings: list[float], rds: list[float],
+                      scores: list[float], tau: float = 0.5) -> None:
+        """Apply a Glicko-2 update against a list of opponents."""
+        opponents = [Rating(r, d, self.vol) for r, d in zip(ratings, rds, strict=True)]
+        new = update(
+            Rating(self.rating, self.rd, self.vol),
+            opponents,
+            scores,
+            tau=tau,
+        )
+        self.rating = new.rating
+        self.rd = new.rd
+        self.vol = new.volatility

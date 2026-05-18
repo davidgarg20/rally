@@ -86,18 +86,14 @@ class RatingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  overall.rating == null
-                      ? '—'
-                      : overall.rating!.round().toString(),
+                  (overall.rating ?? 1500).round().toString(),
                   style: RallyText.rating,
                 ),
                 RallySpace.hGapSm,
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    overall.rating == null
-                        ? '${5 - overall.matchesPlayed} matches to unlock'
-                        : '${overall.matchesPlayed} matches',
+                    '${overall.matchesPlayed} matches',
                     style: RallyText.caption,
                   ),
                 ),

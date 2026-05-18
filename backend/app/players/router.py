@@ -10,15 +10,20 @@ from app.players.schemas import (
     OverallOut, PlayerCreate, PlayerOut, PlayerUpdate, RatingOut,
 )
 
-# Min total matches across both formats to compute an overall.
-_OVERALL_MIN_MATCHES = 5
-
-
 def _compute_overall(ratings) -> OverallOut:
-    """Match-count weighted average of singles + doubles ratings."""
+    """Match-count weighted average of singles + doubles ratings.
+
+    Before any matches are played, total_matches is 0 and we just average
+    the cold-start ratings (which are equal, so the answer is 1500).
+    Once matches start landing, weights kick in.
+    """
     total_matches = sum(r.matches_played for r in ratings)
-    if total_matches < _OVERALL_MIN_MATCHES:
-        return OverallOut(rating=None, matches_played=total_matches)
+    if total_matches == 0:
+        # No matches yet; everyone's at 1500.
+        return OverallOut(
+            rating=sum(r.rating for r in ratings) / len(ratings),
+            matches_played=0,
+        )
     weighted = sum(r.rating * r.matches_played for r in ratings)
     return OverallOut(
         rating=weighted / total_matches,
@@ -32,6 +37,7 @@ def _serialize(player, ratings) -> PlayerOut:
     return PlayerOut(
         id=str(player.id),
         phone_e164=player.phone_e164,
+        username=player.username,
         display_name=player.display_name,
         gender=player.gender,
         dob=player.dob,
@@ -52,6 +58,70 @@ async def create(
     p = await service.create_player(session, ident, body)
     ratings = await service.load_ratings(session, p.id)
     return _serialize(p, ratings)
+
+
+class PlayerSearchEntry(BaseModel):
+    id: str
+    username: str
+    display_name: str
+
+
+@router.get("/search", response_model=list[PlayerSearchEntry])
+async def search_players(
+    q: str, session: DbSession, ident: CurrentIdentity,
+    limit: int = 10,
+) -> list[PlayerSearchEntry]:
+    """Find players by partial username or display_name match.
+
+    Excludes the requester. Returns up to ``limit`` matches.
+    """
+    from sqlalchemy import or_, select
+    from app.db.models import Player
+
+    q_clean = q.strip().lstrip("@").lower()
+    if len(q_clean) < 1:
+        return []
+
+    me = await service.get_by_firebase_uid(session, ident.uid)
+    me_id = me.id if me else None
+
+    stmt = (
+        select(Player)
+        .where(
+            or_(
+                Player.username.ilike(f"%{q_clean}%"),
+                Player.display_name.ilike(f"%{q_clean}%"),
+            )
+        )
+        .limit(limit)
+    )
+    if me_id is not None:
+        stmt = stmt.where(Player.id != me_id)
+
+    rows = (await session.execute(stmt)).scalars().all()
+    return [
+        PlayerSearchEntry(
+            id=str(p.id), username=p.username, display_name=p.display_name,
+        )
+        for p in rows
+    ]
+
+
+@router.get("/check-username")
+async def check_username(
+    u: str, session: DbSession, _ident: CurrentIdentity,
+) -> dict[str, bool | str]:
+    """Returns {'available': true/false, 'reason'?: '...'}.
+
+    Reasons: 'taken', 'invalid_format'.
+    """
+    import re
+    if not re.match(r"^[a-z][a-z0-9_]{2,19}$", u.lower()):
+        return {"available": False, "reason": "invalid_format"}
+    existing = await service.get_by_username(session, u)
+    if existing:
+        return {"available": False, "reason": "taken"}
+    return {"available": True}
 
 
 @router.get("/me", response_model=PlayerOut)

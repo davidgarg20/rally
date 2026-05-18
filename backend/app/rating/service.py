@@ -1,14 +1,10 @@
-"""Rating service: applies Glicko-2 updates on match validation.
+"""Persists Glicko-2 + margin/length updates back to Postgres.
 
-Engine details:
-- Ratings stored on Glicko-2 native scale (1500 mean, 350 max RD).
-- Singles: standard Glicko-2 between two players.
-- Doubles: each player updated as if they played 1v1 vs the opposing team
-  average rating (RD via quadratic mean).
-- The final rating *delta* is scaled by a multiplicative
-  margin/length factor (see ``app.rating.adjustments``) so blowouts move
-  ratings more than nail-biters and shorter games move them less.
-- Ratings floor at ``settings.rating_floor`` (default 100).
+The math lives in ``app.rating.engine`` (pure, no DB). This module:
+  - Loads ``PlayerRating`` rows into Player objects
+  - Calls the engine
+  - Writes ``RatingEvent`` rows
+  - Writes the updated state back to ``PlayerRating``
 """
 from __future__ import annotations
 import math
@@ -16,12 +12,12 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.db.models import (
     Match, MatchGame, MatchParticipant, PlayerRating, RatingEvent,
 )
-from app.rating.adjustments import match_adjustment
-from app.rating.glicko2 import Rating, update as glicko_update
+from app.rating import engine
+from app.rating.engine import RatingSnapshot
+from app.rating.glicko2 import Player
 
 
 async def _load_participants(
@@ -44,19 +40,44 @@ async def _load_rating(
     return res.scalar_one()
 
 
-async def _load_games(
+async def _load_single_game(
     session: AsyncSession, match_id: uuid.UUID
-) -> list[MatchGame]:
+) -> tuple[int, int]:
+    """Single-set matches only: return (team1, team2) points from game 1."""
     res = await session.execute(
-        select(MatchGame)
-        .where(MatchGame.match_id == match_id)
-        .order_by(MatchGame.game_no)
+        select(MatchGame).where(MatchGame.match_id == match_id)
     )
-    return list(res.scalars().all())
+    games = list(res.scalars().all())
+    if not games:
+        raise ValueError(f"match {match_id} has no game")
+    if len(games) > 1:
+        raise ValueError(
+            f"match {match_id} has {len(games)} games — engine is single-set only"
+        )
+    g = games[0]
+    return g.team1_points, g.team2_points
 
 
-def _floor(rating: float) -> float:
-    return max(settings.rating_floor, rating)
+def _to_player(pr: PlayerRating) -> Player:
+    return Player(rating=pr.rating, rd=pr.rd, vol=pr.volatility)
+
+
+def _write_event(session: AsyncSession, *,
+                 player_id: uuid.UUID, match_id: uuid.UUID,
+                 fmt: str, snap: RatingSnapshot) -> None:
+    session.add(RatingEvent(
+        player_id=player_id, match_id=match_id, format=fmt,
+        rating_before=snap.rating_before, rating_after=snap.rating_after,
+        rd_before=snap.rd_before, rd_after=snap.rd_after,
+    ))
+
+
+def _persist(pr: PlayerRating, snap: RatingSnapshot) -> None:
+    """Write the new state back to the ORM row."""
+    pr.rating = snap.rating_after
+    pr.rd = snap.rd_after
+    pr.volatility = snap.vol_after
+    pr.matches_played += 1
 
 
 async def apply_singles_update(
@@ -65,39 +86,31 @@ async def apply_singles_update(
     parts = await _load_participants(session, match_id)
     assert len(parts) == 2, "singles must have exactly 2 participants"
 
-    games_rows = await _load_games(session, match_id)
-    games = [(g.team1_points, g.team2_points) for g in games_rows]
-    mult = match_adjustment(games, winning_team)
+    t1_pts, t2_pts = await _load_single_game(session, match_id)
+    if winning_team == 1:
+        winner_score, loser_score = t1_pts, t2_pts
+    else:
+        winner_score, loser_score = t2_pts, t1_pts
 
     by_team = {p.team: p for p in parts}
-    ratings = {
-        p.player_id: await _load_rating(session, p.player_id, "S")
-        for p in parts
-    }
+    winner_part = by_team[winning_team]
+    loser_part = by_team[3 - winning_team]
 
-    for me_team, opp_team in [(1, 2), (2, 1)]:
-        me = by_team[me_team]
-        opp = by_team[opp_team]
-        r_me = ratings[me.player_id]
-        r_opp = ratings[opp.player_id]
-        score = 1.0 if winning_team == me_team else 0.0
+    pr_w = await _load_rating(session, winner_part.player_id, "S")
+    pr_l = await _load_rating(session, loser_part.player_id, "S")
+    pl_w = _to_player(pr_w)
+    pl_l = _to_player(pr_l)
 
-        g_me = Rating(r_me.rating, r_me.rd, r_me.volatility)
-        g_opp = Rating(r_opp.rating, r_opp.rd, r_opp.volatility)
-        new = glicko_update(g_me, [g_opp], [score])
+    w_snap, l_snap = engine.update_singles(
+        pl_w, pl_l, winner_score, loser_score
+    )
 
-        delta = new.rating - r_me.rating
-        new_rating = _floor(r_me.rating + delta * mult)
-
-        session.add(RatingEvent(
-            player_id=me.player_id, match_id=match_id, format="S",
-            rating_before=r_me.rating, rating_after=new_rating,
-            rd_before=r_me.rd, rd_after=new.rd,
-        ))
-        r_me.rating = new_rating
-        r_me.rd = new.rd
-        r_me.volatility = new.volatility
-        r_me.matches_played += 1
+    _write_event(session, player_id=winner_part.player_id, match_id=match_id,
+                 fmt="S", snap=w_snap)
+    _write_event(session, player_id=loser_part.player_id, match_id=match_id,
+                 fmt="S", snap=l_snap)
+    _persist(pr_w, w_snap)
+    _persist(pr_l, l_snap)
 
 
 async def apply_doubles_update(
@@ -106,53 +119,45 @@ async def apply_doubles_update(
     parts = await _load_participants(session, match_id)
     assert len(parts) == 4, "doubles must have exactly 4 participants"
 
-    games_rows = await _load_games(session, match_id)
-    games = [(g.team1_points, g.team2_points) for g in games_rows]
-    mult = match_adjustment(games, winning_team)
+    t1_pts, t2_pts = await _load_single_game(session, match_id)
+    if winning_team == 1:
+        winner_score, loser_score = t1_pts, t2_pts
+    else:
+        winner_score, loser_score = t2_pts, t1_pts
 
     teams: dict[int, list[MatchParticipant]] = {1: [], 2: []}
     for p in parts:
         teams[p.team].append(p)
-    assert len(teams[1]) == 2 and len(teams[2]) == 2
 
-    ratings = {
-        p.player_id: await _load_rating(session, p.player_id, "D")
-        for p in parts
-    }
+    winner_parts = teams[winning_team]
+    loser_parts = teams[3 - winning_team]
 
-    team_avg = {
-        t: sum(ratings[p.player_id].rating for p in teams[t]) / 2.0
-        for t in (1, 2)
-    }
-    # Quadratic mean for opposing-team RD: sqrt((rd1² + rd2²) / 2).
-    team_rd = {
-        t: math.sqrt(
-            (ratings[teams[t][0].player_id].rd ** 2
-             + ratings[teams[t][1].player_id].rd ** 2) / 2.0
-        )
-        for t in (1, 2)
-    }
+    pr_w1 = await _load_rating(session, winner_parts[0].player_id, "D")
+    pr_w2 = await _load_rating(session, winner_parts[1].player_id, "D")
+    pr_l1 = await _load_rating(session, loser_parts[0].player_id, "D")
+    pr_l2 = await _load_rating(session, loser_parts[1].player_id, "D")
 
-    for t, opp_t in [(1, 2), (2, 1)]:
-        score = 1.0 if winning_team == t else 0.0
-        for p in teams[t]:
-            r = ratings[p.player_id]
-            g_me = Rating(r.rating, r.rd, r.volatility)
-            g_opp = Rating(team_avg[opp_t], team_rd[opp_t], settings.initial_volatility)
-            new = glicko_update(g_me, [g_opp], [score])
+    pl_w1 = _to_player(pr_w1)
+    pl_w2 = _to_player(pr_w2)
+    pl_l1 = _to_player(pr_l1)
+    pl_l2 = _to_player(pr_l2)
 
-            delta = new.rating - r.rating
-            new_rating = _floor(r.rating + delta * mult)
+    w1_snap, w2_snap, l1_snap, l2_snap = engine.update_doubles(
+        (pl_w1, pl_w2), (pl_l1, pl_l2), winner_score, loser_score
+    )
 
-            session.add(RatingEvent(
-                player_id=p.player_id, match_id=match_id, format="D",
-                rating_before=r.rating, rating_after=new_rating,
-                rd_before=r.rd, rd_after=new.rd,
-            ))
-            r.rating = new_rating
-            r.rd = new.rd
-            r.volatility = new.volatility
-            r.matches_played += 1
+    _write_event(session, player_id=winner_parts[0].player_id, match_id=match_id,
+                 fmt="D", snap=w1_snap)
+    _write_event(session, player_id=winner_parts[1].player_id, match_id=match_id,
+                 fmt="D", snap=w2_snap)
+    _write_event(session, player_id=loser_parts[0].player_id, match_id=match_id,
+                 fmt="D", snap=l1_snap)
+    _write_event(session, player_id=loser_parts[1].player_id, match_id=match_id,
+                 fmt="D", snap=l2_snap)
+    _persist(pr_w1, w1_snap)
+    _persist(pr_w2, w2_snap)
+    _persist(pr_l1, l1_snap)
+    _persist(pr_l2, l2_snap)
 
 
 async def apply_match_rating(
@@ -167,13 +172,8 @@ async def apply_match_rating(
 async def age_rd_for_inactivity(
     session: AsyncSession, player_id: uuid.UUID, fmt: str, periods: int
 ) -> None:
-    """Inflate a player's RD to reflect missed rating periods (days).
-
-    Formula: phi' = sqrt(phi² + n * sigma²), capped at ``initial_rd``.
-    Does NOT change the rating itself — only confidence in it.
-    """
+    """Inflate a player's RD for N inactive rating periods. Wraps engine.age_rating."""
     pr = await _load_rating(session, player_id, fmt)
-    phi = pr.rd / 173.7178
-    sigma = pr.volatility
-    phi_new = math.sqrt(phi * phi + periods * sigma * sigma) * 173.7178
-    pr.rd = min(settings.initial_rd, phi_new)
+    p = _to_player(pr)
+    engine.age_rating(p, periods)
+    pr.rd = p.rd
