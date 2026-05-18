@@ -1,32 +1,40 @@
 # Rally Mobile
 
-Flutter app for the Rally badminton-rating MVP.
+Flutter app for the Rally badminton-rating MVP (iOS + Android).
 
 ## Setup
 
 ```bash
-cd mobile
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-## Run
+## Run against local backend
+
+Start the backend (`backend/`) on port 8000, then:
 
 ```bash
-flutter run -d <device>
+# iOS simulator (host networking just works)
+flutter run --dart-define=API_BASE_URL=http://localhost:8000
+
+# Android emulator (10.0.2.2 maps to host)
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 ```
 
-The default backend URL is `http://localhost:8000` (dev). Override with:
+Dev mode bypasses real Firebase: enter any 10-digit phone, then OTP `123456`.
 
-```bash
-flutter run --dart-define=API_BASE_URL=https://staging.rally.example
-```
+## Screens
 
-In dev, the app uses a fake Firebase identity: tap "Send OTP" → enter `123456` → you sign in as `dev:<random-uid>:<phone>` against the backend.
+- Onboarding (phone, OTP, profile setup)
+- Home (rating card, pending validations, recent matches)
+- Log a match (singles/doubles wizard)
+- Match detail (confirm/dispute)
+- Leaderboard (Bangalore, singles/doubles, gender filter)
+- Profile (stats, rating-history chart, sign out)
 
 ## Tests
 
 ```bash
-flutter test                       # unit + widget tests
-flutter test integration_test/     # on a device/emulator
+flutter test                         # unit + widget
+flutter test integration_test/       # against running backend
 ```
