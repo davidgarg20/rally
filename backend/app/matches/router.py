@@ -82,3 +82,10 @@ async def confirm(match_id: uuid.UUID, session: DbSession,
                   ident: CurrentIdentity) -> MatchOut:
     m = await service.confirm_match(session, ident, match_id)
     return await _serialize(session, m)
+
+
+@router.post("/{match_id}/dispute", response_model=MatchOut)
+async def dispute(match_id: uuid.UUID, session: DbSession,
+                  ident: CurrentIdentity) -> MatchOut:
+    m = await service.dispute_match(session, ident, match_id)
+    return await _serialize(session, m)
