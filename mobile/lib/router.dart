@@ -23,23 +23,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (auth == null) return loggingIn ? null : '/onboarding/phone';
 
       // Authed. Check if profile exists.
-      final player = ref.read(currentPlayerProvider).valueOrNull;
-      if (player == null && state.matchedLocation != '/onboarding/profile') {
-        // Avoid bouncing if we haven't tried yet.
-        if (!ref.read(currentPlayerProvider).hasValue) return null;
-        return '/onboarding/profile';
+      final playerAsync = ref.read(currentPlayerProvider);
+      if (!playerAsync.hasValue) return null; // wait for fetch
+      final player = playerAsync.valueOrNull;
+      if (player == null) {
+        return state.matchedLocation == '/onboarding/profile'
+            ? null
+            : '/onboarding/profile';
       }
-      if (player != null && loggingIn) return '/home';
+      if (loggingIn) return '/home';
       return null;
     },
     refreshListenable: GoRouterRefreshNotifier(ref),
     routes: [
       GoRoute(path: '/onboarding/phone', builder: (_, __) => const PhoneScreen()),
       GoRoute(path: '/onboarding/otp', builder: (_, s) {
-        final args = s.extra as Map<String, String>;
+        final args = s.extra as Map<String, dynamic>;
         return OtpScreen(
-          verificationId: args['verificationId']!,
-          phoneE164: args['phone']!,
+          verificationId: args['verificationId'] as String,
+          phoneE164: args['phone'] as String,
         );
       }),
       GoRoute(path: '/onboarding/profile', builder: (_, __) => const ProfileSetupScreen()),

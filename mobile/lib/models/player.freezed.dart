@@ -233,6 +233,178 @@ abstract class _PlayerRating implements PlayerRating {
       throw _privateConstructorUsedError;
 }
 
+Overall _$OverallFromJson(Map<String, dynamic> json) {
+  return _Overall.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Overall {
+  double? get rating => throw _privateConstructorUsedError;
+  @JsonKey(name: 'matches_played')
+  int get matchesPlayed => throw _privateConstructorUsedError;
+
+  /// Serializes this Overall to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of Overall
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $OverallCopyWith<Overall> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $OverallCopyWith<$Res> {
+  factory $OverallCopyWith(Overall value, $Res Function(Overall) then) =
+      _$OverallCopyWithImpl<$Res, Overall>;
+  @useResult
+  $Res call(
+      {double? rating, @JsonKey(name: 'matches_played') int matchesPlayed});
+}
+
+/// @nodoc
+class _$OverallCopyWithImpl<$Res, $Val extends Overall>
+    implements $OverallCopyWith<$Res> {
+  _$OverallCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of Overall
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? rating = freezed,
+    Object? matchesPlayed = null,
+  }) {
+    return _then(_value.copyWith(
+      rating: freezed == rating
+          ? _value.rating
+          : rating // ignore: cast_nullable_to_non_nullable
+              as double?,
+      matchesPlayed: null == matchesPlayed
+          ? _value.matchesPlayed
+          : matchesPlayed // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$OverallImplCopyWith<$Res> implements $OverallCopyWith<$Res> {
+  factory _$$OverallImplCopyWith(
+          _$OverallImpl value, $Res Function(_$OverallImpl) then) =
+      __$$OverallImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {double? rating, @JsonKey(name: 'matches_played') int matchesPlayed});
+}
+
+/// @nodoc
+class __$$OverallImplCopyWithImpl<$Res>
+    extends _$OverallCopyWithImpl<$Res, _$OverallImpl>
+    implements _$$OverallImplCopyWith<$Res> {
+  __$$OverallImplCopyWithImpl(
+      _$OverallImpl _value, $Res Function(_$OverallImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Overall
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? rating = freezed,
+    Object? matchesPlayed = null,
+  }) {
+    return _then(_$OverallImpl(
+      rating: freezed == rating
+          ? _value.rating
+          : rating // ignore: cast_nullable_to_non_nullable
+              as double?,
+      matchesPlayed: null == matchesPlayed
+          ? _value.matchesPlayed
+          : matchesPlayed // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$OverallImpl implements _Overall {
+  const _$OverallImpl(
+      {required this.rating,
+      @JsonKey(name: 'matches_played') required this.matchesPlayed});
+
+  factory _$OverallImpl.fromJson(Map<String, dynamic> json) =>
+      _$$OverallImplFromJson(json);
+
+  @override
+  final double? rating;
+  @override
+  @JsonKey(name: 'matches_played')
+  final int matchesPlayed;
+
+  @override
+  String toString() {
+    return 'Overall(rating: $rating, matchesPlayed: $matchesPlayed)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$OverallImpl &&
+            (identical(other.rating, rating) || other.rating == rating) &&
+            (identical(other.matchesPlayed, matchesPlayed) ||
+                other.matchesPlayed == matchesPlayed));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, rating, matchesPlayed);
+
+  /// Create a copy of Overall
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$OverallImplCopyWith<_$OverallImpl> get copyWith =>
+      __$$OverallImplCopyWithImpl<_$OverallImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$OverallImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Overall implements Overall {
+  const factory _Overall(
+          {required final double? rating,
+          @JsonKey(name: 'matches_played') required final int matchesPlayed}) =
+      _$OverallImpl;
+
+  factory _Overall.fromJson(Map<String, dynamic> json) = _$OverallImpl.fromJson;
+
+  @override
+  double? get rating;
+  @override
+  @JsonKey(name: 'matches_played')
+  int get matchesPlayed;
+
+  /// Create a copy of Overall
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$OverallImplCopyWith<_$OverallImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Player _$PlayerFromJson(Map<String, dynamic> json) {
   return _Player.fromJson(json);
 }
@@ -249,6 +421,7 @@ mixin _$Player {
   @JsonKey(name: 'home_city')
   String get homeCity => throw _privateConstructorUsedError;
   List<PlayerRating> get ratings => throw _privateConstructorUsedError;
+  Overall get overall => throw _privateConstructorUsedError;
 
   /// Serializes this Player to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -271,7 +444,10 @@ abstract class $PlayerCopyWith<$Res> {
       String? gender,
       DateTime? dob,
       @JsonKey(name: 'home_city') String homeCity,
-      List<PlayerRating> ratings});
+      List<PlayerRating> ratings,
+      Overall overall});
+
+  $OverallCopyWith<$Res> get overall;
 }
 
 /// @nodoc
@@ -296,6 +472,7 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
     Object? dob = freezed,
     Object? homeCity = null,
     Object? ratings = null,
+    Object? overall = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -326,7 +503,21 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
           ? _value.ratings
           : ratings // ignore: cast_nullable_to_non_nullable
               as List<PlayerRating>,
+      overall: null == overall
+          ? _value.overall
+          : overall // ignore: cast_nullable_to_non_nullable
+              as Overall,
     ) as $Val);
+  }
+
+  /// Create a copy of Player
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $OverallCopyWith<$Res> get overall {
+    return $OverallCopyWith<$Res>(_value.overall, (value) {
+      return _then(_value.copyWith(overall: value) as $Val);
+    });
   }
 }
 
@@ -344,7 +535,11 @@ abstract class _$$PlayerImplCopyWith<$Res> implements $PlayerCopyWith<$Res> {
       String? gender,
       DateTime? dob,
       @JsonKey(name: 'home_city') String homeCity,
-      List<PlayerRating> ratings});
+      List<PlayerRating> ratings,
+      Overall overall});
+
+  @override
+  $OverallCopyWith<$Res> get overall;
 }
 
 /// @nodoc
@@ -367,6 +562,7 @@ class __$$PlayerImplCopyWithImpl<$Res>
     Object? dob = freezed,
     Object? homeCity = null,
     Object? ratings = null,
+    Object? overall = null,
   }) {
     return _then(_$PlayerImpl(
       id: null == id
@@ -397,6 +593,10 @@ class __$$PlayerImplCopyWithImpl<$Res>
           ? _value._ratings
           : ratings // ignore: cast_nullable_to_non_nullable
               as List<PlayerRating>,
+      overall: null == overall
+          ? _value.overall
+          : overall // ignore: cast_nullable_to_non_nullable
+              as Overall,
     ));
   }
 }
@@ -411,7 +611,8 @@ class _$PlayerImpl implements _Player {
       this.gender,
       this.dob,
       @JsonKey(name: 'home_city') required this.homeCity,
-      required final List<PlayerRating> ratings})
+      required final List<PlayerRating> ratings,
+      required this.overall})
       : _ratings = ratings;
 
   factory _$PlayerImpl.fromJson(Map<String, dynamic> json) =>
@@ -441,8 +642,11 @@ class _$PlayerImpl implements _Player {
   }
 
   @override
+  final Overall overall;
+
+  @override
   String toString() {
-    return 'Player(id: $id, phoneE164: $phoneE164, displayName: $displayName, gender: $gender, dob: $dob, homeCity: $homeCity, ratings: $ratings)';
+    return 'Player(id: $id, phoneE164: $phoneE164, displayName: $displayName, gender: $gender, dob: $dob, homeCity: $homeCity, ratings: $ratings, overall: $overall)';
   }
 
   @override
@@ -459,13 +663,22 @@ class _$PlayerImpl implements _Player {
             (identical(other.dob, dob) || other.dob == dob) &&
             (identical(other.homeCity, homeCity) ||
                 other.homeCity == homeCity) &&
-            const DeepCollectionEquality().equals(other._ratings, _ratings));
+            const DeepCollectionEquality().equals(other._ratings, _ratings) &&
+            (identical(other.overall, overall) || other.overall == overall));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, phoneE164, displayName,
-      gender, dob, homeCity, const DeepCollectionEquality().hash(_ratings));
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      phoneE164,
+      displayName,
+      gender,
+      dob,
+      homeCity,
+      const DeepCollectionEquality().hash(_ratings),
+      overall);
 
   /// Create a copy of Player
   /// with the given fields replaced by the non-null parameter values.
@@ -491,7 +704,8 @@ abstract class _Player implements Player {
       final String? gender,
       final DateTime? dob,
       @JsonKey(name: 'home_city') required final String homeCity,
-      required final List<PlayerRating> ratings}) = _$PlayerImpl;
+      required final List<PlayerRating> ratings,
+      required final Overall overall}) = _$PlayerImpl;
 
   factory _Player.fromJson(Map<String, dynamic> json) = _$PlayerImpl.fromJson;
 
@@ -512,6 +726,8 @@ abstract class _Player implements Player {
   String get homeCity;
   @override
   List<PlayerRating> get ratings;
+  @override
+  Overall get overall;
 
   /// Create a copy of Player
   /// with the given fields replaced by the non-null parameter values.

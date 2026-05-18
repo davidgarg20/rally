@@ -12,8 +12,9 @@ class AuthSession {
 }
 
 class AuthRepository {
-  AuthRepository({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
-  final FirebaseAuth _auth;
+  AuthRepository({FirebaseAuth? auth}) : _authOverride = auth;
+  final FirebaseAuth? _authOverride;
+  FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
 
   /// Returns a verificationId. In dev, the verificationId is the phone itself.
   Future<String> sendOtp(String phoneE164) async {

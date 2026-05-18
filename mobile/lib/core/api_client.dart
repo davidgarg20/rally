@@ -9,6 +9,7 @@ class ApiClient {
         _tokenProvider = tokenProvider {
     this.dio.interceptors.insert(0, InterceptorsWrapper(
       onRequest: (opts, handler) async {
+        opts.headers['ngrok-skip-browser-warning'] = '1';
         if (!opts.path.startsWith('/healthz')) {
           final token = await _tokenProvider();
           if (token != null && token.isNotEmpty) {

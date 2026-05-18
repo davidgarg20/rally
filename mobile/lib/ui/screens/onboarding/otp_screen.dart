@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rally/auth/auth_controller.dart';
 import 'package:rally/env.dart';
+import 'package:rally/state/session_provider.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({super.key, required this.verificationId, required this.phoneE164});
@@ -29,7 +30,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         verificationId: widget.verificationId,
         otp: otp, phone: widget.phoneE164,
       );
-      if (mounted) context.go('/onboarding/profile');
+      // Force-refresh the player fetch; router redirect routes us to
+      // /home if a profile exists, or /onboarding/profile if not.
+      ref.invalidate(currentPlayerProvider);
+      await ref.read(currentPlayerProvider.future);
+      if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {

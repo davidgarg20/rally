@@ -268,8 +268,6 @@ LeaderboardResponse _$LeaderboardResponseFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$LeaderboardResponse {
-  String get format => throw _privateConstructorUsedError;
-  String get city => throw _privateConstructorUsedError;
   String get gender => throw _privateConstructorUsedError;
   List<LeaderboardEntry> get entries => throw _privateConstructorUsedError;
 
@@ -289,11 +287,7 @@ abstract class $LeaderboardResponseCopyWith<$Res> {
           LeaderboardResponse value, $Res Function(LeaderboardResponse) then) =
       _$LeaderboardResponseCopyWithImpl<$Res, LeaderboardResponse>;
   @useResult
-  $Res call(
-      {String format,
-      String city,
-      String gender,
-      List<LeaderboardEntry> entries});
+  $Res call({String gender, List<LeaderboardEntry> entries});
 }
 
 /// @nodoc
@@ -311,20 +305,10 @@ class _$LeaderboardResponseCopyWithImpl<$Res, $Val extends LeaderboardResponse>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? format = null,
-    Object? city = null,
     Object? gender = null,
     Object? entries = null,
   }) {
     return _then(_value.copyWith(
-      format: null == format
-          ? _value.format
-          : format // ignore: cast_nullable_to_non_nullable
-              as String,
-      city: null == city
-          ? _value.city
-          : city // ignore: cast_nullable_to_non_nullable
-              as String,
       gender: null == gender
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
@@ -345,11 +329,7 @@ abstract class _$$LeaderboardResponseImplCopyWith<$Res>
       __$$LeaderboardResponseImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String format,
-      String city,
-      String gender,
-      List<LeaderboardEntry> entries});
+  $Res call({String gender, List<LeaderboardEntry> entries});
 }
 
 /// @nodoc
@@ -365,20 +345,10 @@ class __$$LeaderboardResponseImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? format = null,
-    Object? city = null,
     Object? gender = null,
     Object? entries = null,
   }) {
     return _then(_$LeaderboardResponseImpl(
-      format: null == format
-          ? _value.format
-          : format // ignore: cast_nullable_to_non_nullable
-              as String,
-      city: null == city
-          ? _value.city
-          : city // ignore: cast_nullable_to_non_nullable
-              as String,
       gender: null == gender
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
@@ -395,19 +365,12 @@ class __$$LeaderboardResponseImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$LeaderboardResponseImpl implements _LeaderboardResponse {
   const _$LeaderboardResponseImpl(
-      {required this.format,
-      required this.city,
-      required this.gender,
-      required final List<LeaderboardEntry> entries})
+      {required this.gender, required final List<LeaderboardEntry> entries})
       : _entries = entries;
 
   factory _$LeaderboardResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$LeaderboardResponseImplFromJson(json);
 
-  @override
-  final String format;
-  @override
-  final String city;
   @override
   final String gender;
   final List<LeaderboardEntry> _entries;
@@ -420,7 +383,7 @@ class _$LeaderboardResponseImpl implements _LeaderboardResponse {
 
   @override
   String toString() {
-    return 'LeaderboardResponse(format: $format, city: $city, gender: $gender, entries: $entries)';
+    return 'LeaderboardResponse(gender: $gender, entries: $entries)';
   }
 
   @override
@@ -428,16 +391,14 @@ class _$LeaderboardResponseImpl implements _LeaderboardResponse {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LeaderboardResponseImpl &&
-            (identical(other.format, format) || other.format == format) &&
-            (identical(other.city, city) || other.city == city) &&
             (identical(other.gender, gender) || other.gender == gender) &&
             const DeepCollectionEquality().equals(other._entries, _entries));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, format, city, gender,
-      const DeepCollectionEquality().hash(_entries));
+  int get hashCode => Object.hash(
+      runtimeType, gender, const DeepCollectionEquality().hash(_entries));
 
   /// Create a copy of LeaderboardResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -458,19 +419,13 @@ class _$LeaderboardResponseImpl implements _LeaderboardResponse {
 
 abstract class _LeaderboardResponse implements LeaderboardResponse {
   const factory _LeaderboardResponse(
-          {required final String format,
-          required final String city,
-          required final String gender,
+          {required final String gender,
           required final List<LeaderboardEntry> entries}) =
       _$LeaderboardResponseImpl;
 
   factory _LeaderboardResponse.fromJson(Map<String, dynamic> json) =
       _$LeaderboardResponseImpl.fromJson;
 
-  @override
-  String get format;
-  @override
-  String get city;
   @override
   String get gender;
   @override

@@ -27,6 +27,18 @@ const _$RatingFormatEnumMap = {
   RatingFormat.doubles: 'D',
 };
 
+_$OverallImpl _$$OverallImplFromJson(Map<String, dynamic> json) =>
+    _$OverallImpl(
+      rating: (json['rating'] as num?)?.toDouble(),
+      matchesPlayed: (json['matches_played'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$$OverallImplToJson(_$OverallImpl instance) =>
+    <String, dynamic>{
+      'rating': instance.rating,
+      'matches_played': instance.matchesPlayed,
+    };
+
 _$PlayerImpl _$$PlayerImplFromJson(Map<String, dynamic> json) => _$PlayerImpl(
       id: json['id'] as String,
       phoneE164: json['phone_e164'] as String,
@@ -37,6 +49,7 @@ _$PlayerImpl _$$PlayerImplFromJson(Map<String, dynamic> json) => _$PlayerImpl(
       ratings: (json['ratings'] as List<dynamic>)
           .map((e) => PlayerRating.fromJson(e as Map<String, dynamic>))
           .toList(),
+      overall: Overall.fromJson(json['overall'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$PlayerImplToJson(_$PlayerImpl instance) =>
@@ -48,4 +61,5 @@ Map<String, dynamic> _$$PlayerImplToJson(_$PlayerImpl instance) =>
       'dob': instance.dob?.toIso8601String(),
       'home_city': instance.homeCity,
       'ratings': instance.ratings,
+      'overall': instance.overall,
     };

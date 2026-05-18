@@ -3,7 +3,7 @@ enum AppEnv { dev, staging, prod }
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
+    defaultValue: 'https://rally-api-24880069901.asia-south1.run.app',
   );
 
   static const String _envName = String.fromEnvironment(

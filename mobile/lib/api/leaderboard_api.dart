@@ -11,12 +11,11 @@ class LeaderboardApi {
   final ApiClient _client;
 
   Future<Result<LeaderboardResponse, AppError>> fetch({
-    String format = 'S', String gender = 'All', String city = 'BLR',
-    int limit = 100,
+    String gender = 'All', int limit = 100,
   }) async {
     try {
       final res = await _client.dio.get('/leaderboard', queryParameters: {
-        'format': format, 'gender': gender, 'city': city, 'limit': limit,
+        'gender': gender, 'limit': limit,
       });
       return Result.ok(
         LeaderboardResponse.fromJson(res.data as Map<String, dynamic>),

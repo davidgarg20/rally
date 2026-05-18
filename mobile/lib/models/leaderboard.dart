@@ -20,8 +20,6 @@ class LeaderboardEntry with _$LeaderboardEntry {
 @freezed
 class LeaderboardResponse with _$LeaderboardResponse {
   const factory LeaderboardResponse({
-    required String format,
-    required String city,
     required String gender,
     required List<LeaderboardEntry> entries,
   }) = _LeaderboardResponse;

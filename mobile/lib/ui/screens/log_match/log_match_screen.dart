@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:rally/api/matches_api.dart';
 import 'package:rally/models/match.dart';
+import 'package:rally/state/pending_matches_provider.dart';
 import 'package:rally/state/recent_matches_provider.dart';
 import 'package:rally/state/session_provider.dart';
 import 'package:rally/ui/screens/log_match/log_match_controller.dart';
@@ -45,6 +46,7 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
     res.fold(
       onOk: (m) {
         ref.invalidate(recentMatchesProvider);
+        ref.invalidate(pendingMatchesProvider);
         context.go('/match/${m.id}');
       },
       onErr: (e) => setState(() {
@@ -82,11 +84,13 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
         controlsBuilder: (_, details) => Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Row(children: [
-            FilledButton(
-              onPressed: _submitting ? null : details.onStepContinue,
-              child: _submitting
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_step == 3 ? 'Submit' : 'Continue'),
+            Expanded(
+              child: FilledButton(
+                onPressed: _submitting ? null : details.onStepContinue,
+                child: _submitting
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(_step == 3 ? 'Submit' : 'Continue'),
+              ),
             ),
             if (details.onStepCancel != null) ...[
               const SizedBox(width: 8),

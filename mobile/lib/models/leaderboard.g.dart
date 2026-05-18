@@ -29,8 +29,6 @@ Map<String, dynamic> _$$LeaderboardEntryImplToJson(
 _$LeaderboardResponseImpl _$$LeaderboardResponseImplFromJson(
         Map<String, dynamic> json) =>
     _$LeaderboardResponseImpl(
-      format: json['format'] as String,
-      city: json['city'] as String,
       gender: json['gender'] as String,
       entries: (json['entries'] as List<dynamic>)
           .map((e) => LeaderboardEntry.fromJson(e as Map<String, dynamic>))
@@ -40,8 +38,6 @@ _$LeaderboardResponseImpl _$$LeaderboardResponseImplFromJson(
 Map<String, dynamic> _$$LeaderboardResponseImplToJson(
         _$LeaderboardResponseImpl instance) =>
     <String, dynamic>{
-      'format': instance.format,
-      'city': instance.city,
       'gender': instance.gender,
       'entries': instance.entries,
     };

@@ -22,6 +22,17 @@ class PlayerRating with _$PlayerRating {
 }
 
 @freezed
+class Overall with _$Overall {
+  const factory Overall({
+    required double? rating,
+    @JsonKey(name: 'matches_played') required int matchesPlayed,
+  }) = _Overall;
+
+  factory Overall.fromJson(Map<String, dynamic> json) =>
+      _$OverallFromJson(json);
+}
+
+@freezed
 class Player with _$Player {
   const factory Player({
     required String id,
@@ -31,6 +42,7 @@ class Player with _$Player {
     DateTime? dob,
     @JsonKey(name: 'home_city') required String homeCity,
     required List<PlayerRating> ratings,
+    required Overall overall,
   }) = _Player;
 
   factory Player.fromJson(Map<String, dynamic> json) => _$PlayerFromJson(json);

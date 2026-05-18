@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:rally/api/matches_api.dart';
 import 'package:rally/models/match.dart';
+import 'package:rally/state/leaderboard_provider.dart';
 import 'package:rally/state/pending_matches_provider.dart';
 import 'package:rally/state/recent_matches_provider.dart';
 import 'package:rally/state/session_provider.dart';
@@ -31,6 +32,8 @@ class MatchDetailScreen extends ConsumerWidget {
           ref.invalidate(_matchProvider(matchId));
           ref.invalidate(pendingMatchesProvider);
           ref.invalidate(recentMatchesProvider);
+          ref.invalidate(currentPlayerProvider);
+          ref.invalidate(leaderboardProvider);
         }),
       ),
     );
@@ -178,7 +181,7 @@ class _DeltaText extends StatelessWidget {
     final color = delta >= 0
         ? Colors.green.shade700
         : Theme.of(context).colorScheme.error;
-    return Text('$sign${delta.toStringAsFixed(2)}',
+    return Text('$sign${delta.round()}',
         style: TextStyle(color: color, fontWeight: FontWeight.w600));
   }
 }

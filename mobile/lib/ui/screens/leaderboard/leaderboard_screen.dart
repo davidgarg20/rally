@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:rally/state/leaderboard_provider.dart';
+import 'package:rally/state/session_provider.dart';
+import 'package:rally/ui/design/colors.dart';
+import 'package:rally/ui/design/spacing.dart';
+import 'package:rally/ui/design/typography.dart';
 import 'package:rally/ui/widgets/async_value_view.dart';
 import 'package:rally/ui/widgets/empty_state.dart';
 
@@ -10,70 +14,106 @@ class LeaderboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = ref.watch(leaderboardFormatProvider);
     final gen = ref.watch(leaderboardGenderProvider);
     final data = ref.watch(leaderboardProvider);
+    final me = ref.watch(currentPlayerProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bangalore leaderboard'),
+        title: const Text('Leaderboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(leaderboardProvider),
+            tooltip: 'Refresh',
+          ),
+        ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(96),
+          preferredSize: const Size.fromHeight(52),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Column(
-              children: [
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'S', label: Text('Singles')),
-                    ButtonSegment(value: 'D', label: Text('Doubles')),
-                  ],
-                  selected: {fmt},
-                  onSelectionChanged: (v) =>
-                      ref.read(leaderboardFormatProvider.notifier).state = v.first,
-                ),
-                const SizedBox(height: 8),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'All', label: Text('All')),
-                    ButtonSegment(value: 'M', label: Text('Men')),
-                    ButtonSegment(value: 'F', label: Text('Women')),
-                  ],
-                  selected: {gen},
-                  onSelectionChanged: (v) =>
-                      ref.read(leaderboardGenderProvider.notifier).state = v.first,
-                ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: RallySpace.md,
+              vertical: RallySpace.xs,
+            ),
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'All', label: Text('All')),
+                ButtonSegment(value: 'M', label: Text('Men')),
+                ButtonSegment(value: 'F', label: Text('Women')),
               ],
+              selected: {gen},
+              onSelectionChanged: (v) {
+                ref.read(leaderboardGenderProvider.notifier).state = v.first;
+              },
             ),
           ),
         ),
       ),
-      body: AsyncValueView(
-        value: data,
-        data: (r) => r.entries.isEmpty
-            ? const EmptyState(
-                message: 'Not enough players with 5+ matches yet. Be the first.',
-                icon: Icons.timer_outlined,
-              )
-            : ListView.separated(
-                padding: const EdgeInsets.all(8),
-                itemCount: r.entries.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) {
-                  final e = r.entries[i];
-                  return ListTile(
-                    leading: SizedBox(
-                      width: 32,
-                      child: Text('#${e.rank}',
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(leaderboardProvider);
+          await ref.read(leaderboardProvider.future);
+        },
+        child: AsyncValueView(
+          value: data,
+          data: (r) => r.entries.isEmpty
+              ? ListView(
+                  children: const [
+                    SizedBox(height: 80),
+                    EmptyState(
+                      title: 'Not enough players yet.',
+                      subtitle: 'Players need 5 confirmed matches to appear.',
+                      icon: Icons.hourglass_empty,
                     ),
-                    title: Text(e.displayName),
-                    subtitle: Text('${e.matchesPlayed} matches'),
-                    trailing: Text(e.rating.toStringAsFixed(2),
-                        style: Theme.of(context).textTheme.titleMedium),
-                  );
-                },
-              ),
+                  ],
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: RallySpace.sm,
+                    vertical: RallySpace.sm,
+                  ),
+                  itemCount: r.entries.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final e = r.entries[i];
+                    final isMe = me?.id == e.playerId;
+                    return Container(
+                      color: isMe ? RallyColors.brandLight : null,
+                      child: ListTile(
+                        leading: SizedBox(
+                          width: 36,
+                          child: Text(
+                            '#${e.rank}',
+                            style: RallyText.label.copyWith(
+                              color: e.rank <= 3
+                                  ? RallyColors.brand
+                                  : RallyColors.inkMuted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          e.displayName,
+                          style: RallyText.subtitle.copyWith(
+                            fontWeight:
+                                isMe ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${e.matchesPlayed} matches',
+                          style: RallyText.caption,
+                        ),
+                        trailing: Text(
+                          e.rating.round().toString(),
+                          style: RallyText.title.copyWith(
+                            color: RallyColors.brand,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
       ),
     );
   }
