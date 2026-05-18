@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.deps import CurrentIdentity
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Rally API", version="0.1.0")
@@ -6,6 +7,10 @@ def create_app() -> FastAPI:
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/_debug/identity")
+    async def debug_identity(ident: CurrentIdentity) -> dict[str, str]:
+        return {"uid": ident.uid, "phone_e164": ident.phone_e164}
 
     return app
 
