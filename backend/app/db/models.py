@@ -53,3 +53,110 @@ class PlayerRating(Base):
     )
 
     player: Mapped[Player] = relationship(back_populates="ratings")
+
+
+class Match(Base):
+    __tablename__ = "matches"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    format: Mapped[str] = mapped_column(String, nullable=False)
+    played_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    venue: Mapped[str | None] = mapped_column(String, nullable=True)
+    submitted_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("players.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String, nullable=False)
+    validation_deadline: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    validated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint("format in ('S','D')", name="match_format_chk"),
+        CheckConstraint(
+            "status in ('pending','validated','disputed','expired')",
+            name="match_status_chk",
+        ),
+    )
+
+
+class MatchParticipant(Base):
+    __tablename__ = "match_participants"
+
+    match_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("matches.id"), primary_key=True
+    )
+    player_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("players.id"), primary_key=True
+    )
+    team: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_submitter: Mapped[bool] = mapped_column(nullable=False, default=False)
+    confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    disputed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint("team in (1,2)", name="participant_team_chk"),
+    )
+
+
+class MatchGame(Base):
+    __tablename__ = "match_games"
+
+    match_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("matches.id"), primary_key=True
+    )
+    game_no: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team1_points: Mapped[int] = mapped_column(Integer, nullable=False)
+    team2_points: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("game_no between 1 and 5", name="game_no_chk"),
+    )
+
+
+class RatingEvent(Base):
+    __tablename__ = "rating_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    player_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("players.id"), nullable=False
+    )
+    match_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("matches.id"), nullable=False
+    )
+    format: Mapped[str] = mapped_column(String, nullable=False)
+    rating_before: Mapped[float] = mapped_column(Double, nullable=False)
+    rating_after: Mapped[float] = mapped_column(Double, nullable=False)
+    rd_before: Mapped[float] = mapped_column(Double, nullable=False)
+    rd_after: Mapped[float] = mapped_column(Double, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class MatchInvite(Base):
+    __tablename__ = "match_invites"
+
+    match_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("matches.id"), primary_key=True
+    )
+    phone_e164: Mapped[str] = mapped_column(String, primary_key=True)
+    team: Mapped[int] = mapped_column(Integer, nullable=False)
+    invited_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint("team in (1,2)", name="invite_team_chk"),
+    )
