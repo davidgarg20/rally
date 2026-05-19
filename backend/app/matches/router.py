@@ -79,6 +79,16 @@ async def get(match_id: uuid.UUID, session: DbSession,
     return await _serialize(session, m)
 
 
+@router.get("/{match_id}/preview")
+async def preview(match_id: uuid.UUID, session: DbSession,
+                  _ident: CurrentIdentity) -> dict:
+    """Dry-run: predict each participant's rating delta if this match
+    is confirmed. Doesn't mutate the DB.
+    """
+    deltas = await service.preview_rating_deltas(session, match_id)
+    return {"rating_deltas": deltas}
+
+
 @router.post("/{match_id}/confirm", response_model=MatchOut)
 async def confirm(match_id: uuid.UUID, session: DbSession,
                   ident: CurrentIdentity) -> MatchOut:

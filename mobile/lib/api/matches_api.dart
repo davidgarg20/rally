@@ -43,6 +43,20 @@ class MatchesApi {
         return MatchOut.fromJson(res.data as Map<String, dynamic>);
       });
 
+  /// Returns predicted rating delta per player if this match is confirmed.
+  Future<Result<List<({String playerId, double before, double after})>, AppError>>
+      preview(String id) => _wrap(() async {
+        final res = await _client.dio.get('/matches/$id/preview');
+        final raw = (res.data as Map)['rating_deltas'] as List;
+        return raw
+            .map((e) => (
+                  playerId: e['player_id'] as String,
+                  before: (e['rating_before'] as num).toDouble(),
+                  after: (e['rating_after'] as num).toDouble(),
+                ))
+            .toList();
+      });
+
   Future<Result<T, AppError>> _wrap<T>(Future<T> Function() fn) async {
     try {
       return Result.ok(await fn());

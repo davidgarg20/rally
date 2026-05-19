@@ -5,7 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.firebase import FirebaseIdentity
-from app.db.models import Match, MatchParticipant, Player, PlayerRating, RatingEvent
+from app.db.models import (
+    Match, MatchInvite, MatchParticipant, Player, PlayerRating, RatingEvent,
+)
 from app.errors import Conflict, NotFound
 from app.players.schemas import PlayerCreate, PlayerUpdate
 
@@ -54,9 +56,41 @@ async def create_player(
         PlayerRating(player_id=p.id, format="S"),
         PlayerRating(player_id=p.id, format="D"),
     ])
+
+    # Claim any pending match invites that named this phone. Each invite row
+    # becomes a match_participants row on the same team; the invite is
+    # deleted. The match stays pending until this player (or another
+    # opposing-team registered player) confirms it.
+    await _claim_invites_for(session, p.id, p.phone_e164)
+
     await session.commit()
     await session.refresh(p)
     return p
+
+
+async def _claim_invites_for(
+    session: AsyncSession, player_id: uuid.UUID, phone_e164: str,
+) -> int:
+    """Convert match_invites for this phone into match_participants rows.
+
+    Returns the number of invites claimed. Safe to call on every signup —
+    no-op when there are no invites.
+    """
+    res = await session.execute(
+        select(MatchInvite).where(MatchInvite.phone_e164 == phone_e164)
+    )
+    invites = list(res.scalars().all())
+    for inv in invites:
+        session.add(MatchParticipant(
+            match_id=inv.match_id,
+            player_id=player_id,
+            team=inv.team,
+            is_submitter=False,
+            confirmed_at=None,
+            disputed_at=None,
+        ))
+        await session.delete(inv)
+    return len(invites)
 
 
 async def update_me(

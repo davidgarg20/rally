@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:rally/api/matches_api.dart';
 import 'package:rally/api/players_api.dart';
+import 'package:rally/models/match.dart';
 import 'package:rally/models/rating_event.dart';
 import 'package:rally/state/pending_matches_provider.dart';
 import 'package:rally/state/recent_matches_provider.dart';
@@ -13,6 +15,7 @@ import 'package:rally/ui/widgets/async_value_view.dart';
 import 'package:rally/ui/widgets/empty_state.dart';
 import 'package:rally/ui/widgets/match_tile.dart';
 import 'package:rally/ui/widgets/rating_card.dart';
+import 'package:rally/ui/widgets/streak_badge.dart';
 
 /// Rating history feeds the 7-day delta chip on the rating card.
 final _ratingHistoryProvider = FutureProvider<List<RatingHistoryPoint>>((ref) async {
@@ -109,6 +112,14 @@ class HomeScreen extends ConsumerWidget {
                       recentEvents: history.valueOrNull ?? const [],
                     ),
             ),
+            // Streak (compact pill aligned right)
+            if ((recent.valueOrNull?.isNotEmpty ?? false) && myPhone != null) ...[
+              RallySpace.gapSm,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: StreakBadge(matches: recent.value!, myPhone: myPhone),
+              ),
+            ],
             RallySpace.gapLg,
             _SectionHeader(
               title: 'Awaiting your confirmation',
@@ -126,10 +137,10 @@ class HomeScreen extends ConsumerWidget {
                   : Column(
                       children: [
                         for (final m in list)
-                          MatchTile(
+                          _PendingMatchTile(
                             match: m,
                             myPhone: myPhone,
-                            onTap: () => context.push('/match/${m.id}'),
+                            myPlayerId: player.valueOrNull?.id,
                           ),
                       ],
                     ),
@@ -187,6 +198,50 @@ class _SectionHeader extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+
+/// Pending tile that asynchronously fetches the rating-delta preview
+/// and passes it to MatchTile. Falls back to a plain tile if the preview
+/// fails (e.g., no rating data yet).
+final _previewProvider =
+    FutureProvider.family<List<({String playerId, double before, double after})>,
+        String>((ref, matchId) async {
+  final res = await ref.watch(matchesApiProvider).preview(matchId);
+  return res.fold(onOk: (d) => d, onErr: (_) => const []);
+});
+
+class _PendingMatchTile extends ConsumerWidget {
+  const _PendingMatchTile({
+    required this.match,
+    required this.myPhone,
+    required this.myPlayerId,
+  });
+
+  final MatchOut match;
+  final String? myPhone;
+  final String? myPlayerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preview = ref.watch(_previewProvider(match.id));
+    double? myDelta;
+    final list = preview.valueOrNull;
+    if (list != null && myPlayerId != null) {
+      for (final p in list) {
+        if (p.playerId == myPlayerId) {
+          myDelta = p.after - p.before;
+          break;
+        }
+      }
+    }
+    return MatchTile(
+      match: match,
+      myPhone: myPhone,
+      previewDelta: myDelta,
+      onTap: () => context.push('/match/${match.id}'),
     );
   }
 }

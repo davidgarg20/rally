@@ -194,6 +194,75 @@ async def load_games(
     return list(res.scalars().all())
 
 
+async def preview_rating_deltas(
+    session: AsyncSession, match_id: uuid.UUID,
+) -> list[dict]:
+    """Predict per-player rating deltas if this pending match is confirmed.
+
+    Doesn't mutate any persisted state. Returns a list of
+    {player_id, rating_before, rating_after} dicts.
+    """
+    from app.db.models import PlayerRating
+    from app.rating import engine
+    from app.rating.glicko2 import Player as RatingPlayer
+
+    match = await load_match(session, match_id)
+    parts = await load_participants(session, match_id)
+    games_rows = await load_games(session, match_id)
+    if not games_rows:
+        return []
+    g = games_rows[0]
+    winner_team = 1 if g.team1_points > g.team2_points else 2
+    w_score = max(g.team1_points, g.team2_points)
+    l_score = min(g.team1_points, g.team2_points)
+
+    fmt = match.format
+    # Load current ratings.
+    rating_for: dict = {}
+    for mp, _p in parts:
+        res = await session.execute(
+            select(PlayerRating).where(
+                (PlayerRating.player_id == mp.player_id)
+                & (PlayerRating.format == fmt)
+            )
+        )
+        pr = res.scalar_one()
+        rating_for[mp.player_id] = pr
+
+    # Build engine Player instances (deep-copy state — engine mutates).
+    eng_players = {
+        pid: RatingPlayer(rating=pr.rating, rd=pr.rd, vol=pr.volatility)
+        for pid, pr in rating_for.items()
+    }
+    befores = {pid: pl.rating for pid, pl in eng_players.items()}
+
+    if fmt == "S":
+        winner = next(mp for mp, _p in parts if mp.team == winner_team)
+        loser = next(mp for mp, _p in parts if mp.team != winner_team)
+        engine.update_singles(
+            eng_players[winner.player_id],
+            eng_players[loser.player_id],
+            w_score, l_score,
+        )
+    else:
+        winners = [mp for mp, _p in parts if mp.team == winner_team]
+        losers = [mp for mp, _p in parts if mp.team != winner_team]
+        engine.update_doubles(
+            (eng_players[winners[0].player_id], eng_players[winners[1].player_id]),
+            (eng_players[losers[0].player_id], eng_players[losers[1].player_id]),
+            w_score, l_score,
+        )
+
+    return [
+        {
+            "player_id": str(pid),
+            "rating_before": befores[pid],
+            "rating_after": pl.rating,
+        }
+        for pid, pl in eng_players.items()
+    ]
+
+
 async def confirm_match(
     session: AsyncSession, ident: FirebaseIdentity, match_id: uuid.UUID
 ) -> Match:

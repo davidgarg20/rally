@@ -15,11 +15,15 @@ class MatchTile extends StatelessWidget {
     required this.match,
     required this.onTap,
     this.myPhone,
+    this.previewDelta,
   });
 
   final MatchOut match;
   final VoidCallback onTap;
   final String? myPhone;
+
+  /// If provided, shown as a "would change by +X" pill for pending matches.
+  final double? previewDelta;
 
   Participant? get _me {
     if (myPhone == null) return null;
@@ -152,7 +156,9 @@ class MatchTile extends StatelessWidget {
                                     : RallyColors.danger,
                                 fontWeight: FontWeight.w700,
                               ),
-                            ),
+                            )
+                          else if (previewDelta != null)
+                            _PreviewPill(delta: previewDelta!),
                         ],
                       ),
                     ],
@@ -166,6 +172,36 @@ class MatchTile extends StatelessWidget {
     );
   }
 }
+
+class _PreviewPill extends StatelessWidget {
+  const _PreviewPill({required this.delta});
+  final double delta;
+
+  @override
+  Widget build(BuildContext context) {
+    final positive = delta >= 0;
+    final color = positive ? RallyColors.success : RallyColors.danger;
+    final sign = positive ? '+' : '';
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: RallySpace.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(RallyRadius.pill),
+      ),
+      child: Text(
+        '$sign${delta.round()} if confirmed',
+        style: RallyText.caption.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});

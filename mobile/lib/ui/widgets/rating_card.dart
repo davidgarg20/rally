@@ -4,6 +4,8 @@ import 'package:rally/models/rating_event.dart';
 import 'package:rally/ui/design/colors.dart';
 import 'package:rally/ui/design/spacing.dart';
 import 'package:rally/ui/design/typography.dart';
+import 'package:rally/ui/share/share_cards.dart';
+import 'package:rally/ui/share/share_sheet.dart';
 
 /// Hero card on the home screen.
 ///
@@ -79,6 +81,26 @@ class RatingCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 if (delta != null) _DeltaChip(delta: delta),
+                RallySpace.hGapSm,
+                InkWell(
+                  borderRadius: BorderRadius.circular(RallyRadius.pill),
+                  onTap: () => ShareCardSheet.show(
+                    context,
+                    cards: [
+                      RatingShareCard(me: player, sevenDayDelta: delta),
+                    ],
+                    shareText: "I'm @${player.username} on Rally — "
+                        "current rating ${(player.overall.rating ?? 1500).round()}.",
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      size: 18,
+                      color: RallyColors.inkMuted,
+                    ),
+                  ),
+                ),
               ],
             ),
             RallySpace.gapXs,
