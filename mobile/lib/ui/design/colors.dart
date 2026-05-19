@@ -8,19 +8,21 @@ class RallyColors {
   RallyColors._();
 
   // ── Brand ───────────────────────────────────────────────────────────────
-  static const brand = Color(0xFF1E88E5);
-  static const brandDark = Color(0xFF1565C0);
-  static const brandLight = Color(0xFFE3F2FD);
+  // Lime/chartreuse accent — energetic, sporty, paired with cream + ink.
+  static const brand = Color(0xFFB8E04A);
+  static const brandDark = Color(0xFF9BC832);
+  static const brandLight = Color(0xFFE8F5C8);
 
   // ── Neutrals ────────────────────────────────────────────────────────────
-  static const ink = Color(0xFF111418);
-  static const inkMuted = Color(0xFF5F6B7A);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceMuted = Color(0xFFF6F8FA);
-  static const divider = Color(0xFFE3E6EB);
+  // Warm cream backgrounds + near-black ink for high contrast type.
+  static const ink = Color(0xFF1A1D1F);
+  static const inkMuted = Color(0xFF6B7280);
+  static const surface = Color(0xFFFBF7EE);
+  static const surfaceMuted = Color(0xFFF3EFE4);
+  static const divider = Color(0xFFE5E0D2);
 
   // ── Semantic ────────────────────────────────────────────────────────────
-  static const success = Color(0xFF14B870);
+  static const success = Color(0xFF8DBF2F);
   static const danger = Color(0xFFE63946);
   static const warning = Color(0xFFF59E0B);
 

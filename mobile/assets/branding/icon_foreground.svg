@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Adaptive icon foreground: shuttlecock silhouette, no background,
+  scaled into the inner safe area (~70% of canvas) so Android's
+  squircle/circle masks don't crop it.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g transform="translate(77 77) scale(0.70)">
+    <g transform="rotate(30 256 256)">
+      <circle cx="256" cy="160" r="64" fill="#ffffff"/>
+      <path
+        d="M 208 200
+           L 304 200
+           L 360 380
+           L 152 380
+           Z"
+        fill="#ffffff"
+      />
+      <g stroke="#1565C0" stroke-width="10" stroke-linecap="round">
+        <line x1="232" y1="200" x2="200" y2="370"/>
+        <line x1="256" y1="200" x2="256" y2="370"/>
+        <line x1="280" y1="200" x2="312" y2="370"/>
+      </g>
+    </g>
+  </g>
+</svg>

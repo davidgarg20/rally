@@ -13,6 +13,7 @@ class RallyTheme {
       seedColor: RallyColors.brand,
       brightness: Brightness.light,
       primary: RallyColors.brand,
+      onPrimary: RallyColors.ink,
       surface: RallyColors.surface,
       surfaceContainerHighest: RallyColors.surfaceMuted,
       onSurface: RallyColors.ink,
@@ -142,7 +143,7 @@ class RallyTheme {
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: RallyColors.brand,
-        foregroundColor: RallyColors.surface,
+        foregroundColor: RallyColors.ink,
         elevation: 1,
       ),
     );

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Horizontal lockup, ink-on-cream. Used on the cream splash screen.
+  Shuttlecock in ink, RALLY in ink, feather divider lines in lime brand.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220"
+     font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif">
+  <g transform="translate(20 20) scale(0.36)">
+    <g transform="rotate(30 256 256)">
+      <circle cx="256" cy="160" r="64" fill="#1A1D1F"/>
+      <path
+        d="M 208 200
+           L 304 200
+           L 360 380
+           L 152 380
+           Z"
+        fill="#1A1D1F"
+      />
+      <g stroke="#B8E04A" stroke-width="10" stroke-linecap="round">
+        <line x1="232" y1="200" x2="200" y2="370"/>
+        <line x1="256" y1="200" x2="256" y2="370"/>
+        <line x1="280" y1="200" x2="312" y2="370"/>
+      </g>
+    </g>
+  </g>
+
+  <text x="220" y="148"
+        font-size="120"
+        font-weight="900"
+        letter-spacing="4"
+        fill="#1A1D1F">RALLY</text>
+</svg>

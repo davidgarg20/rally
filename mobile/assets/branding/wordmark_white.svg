@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RALLY wordmark, white variant. Use on brand-blue backgrounds
+  (splash screen, share cards).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180"
+     font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif">
+  <text x="320" y="135"
+        font-size="140"
+        font-weight="900"
+        letter-spacing="6"
+        text-anchor="middle"
+        fill="#ffffff">RALLY</text>
+</svg>

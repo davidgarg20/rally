@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RALLY wordmark, variant A: bold sans, tight letter spacing,
+  flat-bottomed letterforms (no decorative serifs). Reads as confident
+  and sporty without being aggressive.
+
+  Hand-drawn paths rather than a system font so it's the same on every
+  device + can be exported as a vector asset.
+
+  Designed on a 700 × 200 canvas. Letters sit on a baseline at y=160,
+  capital height = 120. Stroke widths = 22 (the "thick").
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 200">
+  <g fill="#1565C0">
+    <!-- R -->
+    <!-- Left vertical stem -->
+    <rect x="40" y="40" width="22" height="120"/>
+    <!-- Top horizontal bar of the bowl -->
+    <rect x="40" y="40" width="80" height="22"/>
+    <!-- Right vertical of the bowl -->
+    <rect x="98" y="40" width="22" height="64"/>
+    <!-- Bottom of the bowl -->
+    <rect x="40" y="82" width="80" height="22"/>
+    <!-- Diagonal leg of the R -->
+    <polygon points="76,104 120,160 98,160 64,116"/>
+
+    <!-- A -->
+    <!-- Left diagonal -->
+    <polygon points="160,160 182,160 220,40 198,40"/>
+    <!-- Right diagonal -->
+    <polygon points="240,40 218,40 256,160 278,160"/>
+    <!-- Crossbar -->
+    <rect x="185" y="106" width="68" height="20"/>
+
+    <!-- L -->
+    <rect x="300" y="40" width="22" height="120"/>
+    <rect x="300" y="138" width="80" height="22"/>
+
+    <!-- L -->
+    <rect x="400" y="40" width="22" height="120"/>
+    <rect x="400" y="138" width="80" height="22"/>
+
+    <!-- Y -->
+    <!-- Top-left arm -->
+    <polygon points="500,40 522,40 545,98 523,98"/>
+    <!-- Top-right arm -->
+    <polygon points="588,40 566,40 545,98 567,98"/>
+    <!-- Stem -->
+    <rect x="534" y="96" width="22" height="64"/>
+  </g>
+</svg>

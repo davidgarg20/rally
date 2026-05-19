@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RALLY wordmark — clean, bold, no extra decoration.
+  Brand blue, heavy weight, tight tracking. Pairs with the
+  shuttlecock icon. Reliable across SVG renderers (text only).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180"
+     font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif">
+  <text x="320" y="135"
+        font-size="140"
+        font-weight="900"
+        letter-spacing="6"
+        text-anchor="middle"
+        fill="#1565C0">RALLY</text>
+</svg>
