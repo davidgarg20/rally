@@ -1,11 +1,13 @@
 from __future__ import annotations
 from typing import Literal
+
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import select
 
-from app.db.models import Player, PlayerRating
+from app.db.models import Player
 from app.deps import CurrentIdentity, DbSession
+
 
 router = APIRouter(prefix="/leaderboard", tags=["leaderboard"])
 
@@ -33,41 +35,29 @@ async def get_leaderboard(
     gender: Literal["All", "M", "F"] = Query("All"),
     limit: int = Query(100, ge=1, le=500),
 ) -> LeaderboardResponse:
-    """Global leaderboard. Rating is match-count-weighted average of S + D.
+    """Global leaderboard, sorted by per-player rating.
 
-    Players need >= MIN_MATCHES total matches (S + D combined) to appear.
+    Players need >= MIN_MATCHES total matches to appear.
     """
-    weighted = func.sum(PlayerRating.rating * PlayerRating.matches_played)
-    total_matches = func.sum(PlayerRating.matches_played)
-    overall = (weighted / func.nullif(total_matches, 0)).label("overall")
-
     stmt = (
-        select(
-            Player.id.label("player_id"),
-            Player.username,
-            Player.display_name,
-            overall,
-            total_matches.label("total_matches"),
-        )
-        .join(PlayerRating, PlayerRating.player_id == Player.id)
-        .group_by(Player.id, Player.username, Player.display_name)
-        .having(total_matches >= MIN_MATCHES)
-        .order_by(overall.desc())
+        select(Player)
+        .where(Player.matches_played >= MIN_MATCHES)
+        .order_by(Player.rating.desc())
         .limit(limit)
     )
     if gender in ("M", "F"):
         stmt = stmt.where(Player.gender == gender)
 
-    rows = (await session.execute(stmt)).all()
+    rows = (await session.execute(stmt)).scalars().all()
     entries = [
         LeaderboardEntry(
             rank=i + 1,
-            player_id=str(pid),
-            username=uname,
-            display_name=name,
-            rating=float(rating),
-            matches_played=int(matches),
+            player_id=str(p.id),
+            username=p.username,
+            display_name=p.display_name,
+            rating=p.rating,
+            matches_played=p.matches_played,
         )
-        for i, (pid, uname, name, rating, matches) in enumerate(rows)
+        for i, p in enumerate(rows)
     ]
     return LeaderboardResponse(gender=gender, entries=entries)

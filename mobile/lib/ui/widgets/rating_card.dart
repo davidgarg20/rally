@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:rally/models/player.dart';
 import 'package:rally/models/rating_event.dart';
 import 'package:rally/ui/design/colors.dart';
@@ -7,13 +8,10 @@ import 'package:rally/ui/design/typography.dart';
 import 'package:rally/ui/share/share_cards.dart';
 import 'package:rally/ui/share/share_sheet.dart';
 
-/// Hero card on the home screen.
+/// Hero card on the home screen. Single rating per player.
 ///
-/// Visual hierarchy:
-///   big number   = overall (weighted blend of singles + doubles by matches)
-///   small chips  = singles + doubles individually
-///
-/// 7-day delta chip on the right shows recent overall trend when available.
+/// 7-day delta chip on the right shows recent trend when ≥2 events in the
+/// last 7 days.
 class RatingCard extends StatelessWidget {
   const RatingCard({
     super.key,
@@ -24,44 +22,19 @@ class RatingCard extends StatelessWidget {
   final Player player;
   final List<RatingHistoryPoint> recentEvents;
 
-  PlayerRating? _ratingFor(RatingFormat fmt) {
-    for (final r in player.ratings) {
-      if (r.format == fmt) return r;
-    }
-    return null;
-  }
-
-  /// Estimate overall delta: weighted-avg the per-format 7-day deltas by
-  /// match counts. Returns null if not enough recent history.
-  double? _sevenDayOverallDelta() {
-    if (player.overall.rating == null) return null;
+  double? _sevenDayDelta() {
     final cutoff = DateTime.now().subtract(const Duration(days: 7));
-    double? deltaFor(String fmt) {
-      final pts = recentEvents
-          .where((e) => e.format == fmt && e.createdAt.isAfter(cutoff))
-          .toList();
-      if (pts.length < 2) return null;
-      pts.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      return pts.last.ratingAfter - pts.first.ratingAfter;
-    }
-    final ds = deltaFor('S');
-    final dd = deltaFor('D');
-    final s = _ratingFor(RatingFormat.singles);
-    final d = _ratingFor(RatingFormat.doubles);
-    final sCount = s?.matchesPlayed ?? 0;
-    final dCount = d?.matchesPlayed ?? 0;
-    if (ds == null && dd == null) return null;
-    if (ds == null) return dd;
-    if (dd == null) return ds;
-    final total = sCount + dCount;
-    if (total == 0) return null;
-    return (ds * sCount + dd * dCount) / total;
+    final pts = recentEvents
+        .where((e) => e.createdAt.isAfter(cutoff))
+        .toList();
+    if (pts.length < 2) return null;
+    pts.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return pts.last.ratingAfter - pts.first.ratingAfter;
   }
 
   @override
   Widget build(BuildContext context) {
-    final overall = player.overall;
-    final delta = _sevenDayOverallDelta();
+    final delta = _sevenDayDelta();
 
     return Card(
       child: Padding(
@@ -90,7 +63,7 @@ class RatingCard extends StatelessWidget {
                       RatingShareCard(me: player, sevenDayDelta: delta),
                     ],
                     shareText: "I'm @${player.username} on Rally — "
-                        "current rating ${(player.overall.rating ?? 1500).round()}.",
+                        "current rating ${player.rating.round()}.",
                   ),
                   child: const Padding(
                     padding: EdgeInsets.all(4),
@@ -108,14 +81,14 @@ class RatingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  (overall.rating ?? 1500).round().toString(),
+                  player.rating.round().toString(),
                   style: RallyText.rating,
                 ),
                 RallySpace.hGapSm,
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    '${overall.matchesPlayed} matches',
+                    '${player.matchesPlayed} matches',
                     style: RallyText.caption,
                   ),
                 ),

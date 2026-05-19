@@ -267,7 +267,7 @@ class RatingShareCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rating = (me.overall.rating ?? 1500).round();
+    final rating = me.rating.round();
     final delta = sevenDayDelta;
     return _CardFrame(
       username: me.username,
@@ -324,7 +324,7 @@ class RatingShareCard extends StatelessWidget {
                 const SizedBox(width: 12),
               ],
               Text(
-                '${me.overall.matchesPlayed} matches'
+                '${me.matchesPlayed} matches'
                 '${rankInCity != null ? ' · #$rankInCity in ${me.homeCity}' : ''}',
                 style: const TextStyle(
                   color: RallyColors.inkMuted,

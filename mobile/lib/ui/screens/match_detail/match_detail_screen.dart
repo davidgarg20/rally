@@ -264,9 +264,7 @@ Future<void> _shareMatch(BuildContext context, MatchOut m, player_model.Player? 
   final deltaPart = myDelta == null || myDelta == 0
       ? ''
       : ' (${myDelta > 0 ? '+' : ''}${myDelta.round()})';
-  final ratingPart = me?.overall.rating == null
-      ? ''
-      : ' · Rally rating ${me!.overall.rating!.round()}';
+  final ratingPart = me == null ? '' : ' · Rally rating ${me.rating.round()}';
 
   final text = '$lead$oppPart$scorePart in ${formatPart()}$deltaPart$ratingPart on Rally.';
 

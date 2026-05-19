@@ -63,10 +63,8 @@ class ProfileScreen extends ConsumerWidget {
                               style: Theme.of(context).textTheme.bodySmall),
                           const SizedBox(height: 8),
                           Text(
-                            p.overall.rating == null
-                                ? 'Rating: — (${p.overall.matchesPlayed} matches)'
-                                : 'Rating: ${p.overall.rating!.round()} '
-                                    '(${p.overall.matchesPlayed} matches)',
+                            'Rating: ${p.rating.round()} '
+                            '(${p.matchesPlayed} matches)',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ],

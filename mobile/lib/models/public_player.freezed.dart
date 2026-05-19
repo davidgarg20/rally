@@ -27,8 +27,10 @@ mixin _$PublicPlayer {
   String? get gender => throw _privateConstructorUsedError;
   @JsonKey(name: 'home_city')
   String get homeCity => throw _privateConstructorUsedError;
-  List<PlayerRating> get ratings => throw _privateConstructorUsedError;
-  Overall get overall => throw _privateConstructorUsedError;
+  double get rating => throw _privateConstructorUsedError;
+  double get rd => throw _privateConstructorUsedError;
+  @JsonKey(name: 'matches_played')
+  int get matchesPlayed => throw _privateConstructorUsedError;
   int? get rank => throw _privateConstructorUsedError;
 
   /// Serializes this PublicPlayer to a JSON map.
@@ -53,11 +55,10 @@ abstract class $PublicPlayerCopyWith<$Res> {
       @JsonKey(name: 'display_name') String displayName,
       String? gender,
       @JsonKey(name: 'home_city') String homeCity,
-      List<PlayerRating> ratings,
-      Overall overall,
+      double rating,
+      double rd,
+      @JsonKey(name: 'matches_played') int matchesPlayed,
       int? rank});
-
-  $OverallCopyWith<$Res> get overall;
 }
 
 /// @nodoc
@@ -80,8 +81,9 @@ class _$PublicPlayerCopyWithImpl<$Res, $Val extends PublicPlayer>
     Object? displayName = null,
     Object? gender = freezed,
     Object? homeCity = null,
-    Object? ratings = null,
-    Object? overall = null,
+    Object? rating = null,
+    Object? rd = null,
+    Object? matchesPlayed = null,
     Object? rank = freezed,
   }) {
     return _then(_value.copyWith(
@@ -105,29 +107,23 @@ class _$PublicPlayerCopyWithImpl<$Res, $Val extends PublicPlayer>
           ? _value.homeCity
           : homeCity // ignore: cast_nullable_to_non_nullable
               as String,
-      ratings: null == ratings
-          ? _value.ratings
-          : ratings // ignore: cast_nullable_to_non_nullable
-              as List<PlayerRating>,
-      overall: null == overall
-          ? _value.overall
-          : overall // ignore: cast_nullable_to_non_nullable
-              as Overall,
+      rating: null == rating
+          ? _value.rating
+          : rating // ignore: cast_nullable_to_non_nullable
+              as double,
+      rd: null == rd
+          ? _value.rd
+          : rd // ignore: cast_nullable_to_non_nullable
+              as double,
+      matchesPlayed: null == matchesPlayed
+          ? _value.matchesPlayed
+          : matchesPlayed // ignore: cast_nullable_to_non_nullable
+              as int,
       rank: freezed == rank
           ? _value.rank
           : rank // ignore: cast_nullable_to_non_nullable
               as int?,
     ) as $Val);
-  }
-
-  /// Create a copy of PublicPlayer
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $OverallCopyWith<$Res> get overall {
-    return $OverallCopyWith<$Res>(_value.overall, (value) {
-      return _then(_value.copyWith(overall: value) as $Val);
-    });
   }
 }
 
@@ -145,12 +141,10 @@ abstract class _$$PublicPlayerImplCopyWith<$Res>
       @JsonKey(name: 'display_name') String displayName,
       String? gender,
       @JsonKey(name: 'home_city') String homeCity,
-      List<PlayerRating> ratings,
-      Overall overall,
+      double rating,
+      double rd,
+      @JsonKey(name: 'matches_played') int matchesPlayed,
       int? rank});
-
-  @override
-  $OverallCopyWith<$Res> get overall;
 }
 
 /// @nodoc
@@ -171,8 +165,9 @@ class __$$PublicPlayerImplCopyWithImpl<$Res>
     Object? displayName = null,
     Object? gender = freezed,
     Object? homeCity = null,
-    Object? ratings = null,
-    Object? overall = null,
+    Object? rating = null,
+    Object? rd = null,
+    Object? matchesPlayed = null,
     Object? rank = freezed,
   }) {
     return _then(_$PublicPlayerImpl(
@@ -196,14 +191,18 @@ class __$$PublicPlayerImplCopyWithImpl<$Res>
           ? _value.homeCity
           : homeCity // ignore: cast_nullable_to_non_nullable
               as String,
-      ratings: null == ratings
-          ? _value._ratings
-          : ratings // ignore: cast_nullable_to_non_nullable
-              as List<PlayerRating>,
-      overall: null == overall
-          ? _value.overall
-          : overall // ignore: cast_nullable_to_non_nullable
-              as Overall,
+      rating: null == rating
+          ? _value.rating
+          : rating // ignore: cast_nullable_to_non_nullable
+              as double,
+      rd: null == rd
+          ? _value.rd
+          : rd // ignore: cast_nullable_to_non_nullable
+              as double,
+      matchesPlayed: null == matchesPlayed
+          ? _value.matchesPlayed
+          : matchesPlayed // ignore: cast_nullable_to_non_nullable
+              as int,
       rank: freezed == rank
           ? _value.rank
           : rank // ignore: cast_nullable_to_non_nullable
@@ -221,10 +220,10 @@ class _$PublicPlayerImpl implements _PublicPlayer {
       @JsonKey(name: 'display_name') required this.displayName,
       this.gender,
       @JsonKey(name: 'home_city') required this.homeCity,
-      required final List<PlayerRating> ratings,
-      required this.overall,
-      this.rank})
-      : _ratings = ratings;
+      required this.rating,
+      required this.rd,
+      @JsonKey(name: 'matches_played') required this.matchesPlayed,
+      this.rank});
 
   factory _$PublicPlayerImpl.fromJson(Map<String, dynamic> json) =>
       _$$PublicPlayerImplFromJson(json);
@@ -241,22 +240,19 @@ class _$PublicPlayerImpl implements _PublicPlayer {
   @override
   @JsonKey(name: 'home_city')
   final String homeCity;
-  final List<PlayerRating> _ratings;
   @override
-  List<PlayerRating> get ratings {
-    if (_ratings is EqualUnmodifiableListView) return _ratings;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_ratings);
-  }
-
+  final double rating;
   @override
-  final Overall overall;
+  final double rd;
+  @override
+  @JsonKey(name: 'matches_played')
+  final int matchesPlayed;
   @override
   final int? rank;
 
   @override
   String toString() {
-    return 'PublicPlayer(id: $id, username: $username, displayName: $displayName, gender: $gender, homeCity: $homeCity, ratings: $ratings, overall: $overall, rank: $rank)';
+    return 'PublicPlayer(id: $id, username: $username, displayName: $displayName, gender: $gender, homeCity: $homeCity, rating: $rating, rd: $rd, matchesPlayed: $matchesPlayed, rank: $rank)';
   }
 
   @override
@@ -272,23 +268,17 @@ class _$PublicPlayerImpl implements _PublicPlayer {
             (identical(other.gender, gender) || other.gender == gender) &&
             (identical(other.homeCity, homeCity) ||
                 other.homeCity == homeCity) &&
-            const DeepCollectionEquality().equals(other._ratings, _ratings) &&
-            (identical(other.overall, overall) || other.overall == overall) &&
+            (identical(other.rating, rating) || other.rating == rating) &&
+            (identical(other.rd, rd) || other.rd == rd) &&
+            (identical(other.matchesPlayed, matchesPlayed) ||
+                other.matchesPlayed == matchesPlayed) &&
             (identical(other.rank, rank) || other.rank == rank));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      username,
-      displayName,
-      gender,
-      homeCity,
-      const DeepCollectionEquality().hash(_ratings),
-      overall,
-      rank);
+  int get hashCode => Object.hash(runtimeType, id, username, displayName,
+      gender, homeCity, rating, rd, matchesPlayed, rank);
 
   /// Create a copy of PublicPlayer
   /// with the given fields replaced by the non-null parameter values.
@@ -313,8 +303,9 @@ abstract class _PublicPlayer implements PublicPlayer {
       @JsonKey(name: 'display_name') required final String displayName,
       final String? gender,
       @JsonKey(name: 'home_city') required final String homeCity,
-      required final List<PlayerRating> ratings,
-      required final Overall overall,
+      required final double rating,
+      required final double rd,
+      @JsonKey(name: 'matches_played') required final int matchesPlayed,
       final int? rank}) = _$PublicPlayerImpl;
 
   factory _PublicPlayer.fromJson(Map<String, dynamic> json) =
@@ -333,9 +324,12 @@ abstract class _PublicPlayer implements PublicPlayer {
   @JsonKey(name: 'home_city')
   String get homeCity;
   @override
-  List<PlayerRating> get ratings;
+  double get rating;
   @override
-  Overall get overall;
+  double get rd;
+  @override
+  @JsonKey(name: 'matches_played')
+  int get matchesPlayed;
   @override
   int? get rank;
 

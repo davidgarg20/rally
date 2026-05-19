@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'package:rally/models/match.dart';
-import 'package:rally/models/player.dart';
 
 part 'public_player.freezed.dart';
 part 'public_player.g.dart';
@@ -15,8 +14,9 @@ class PublicPlayer with _$PublicPlayer {
     @JsonKey(name: 'display_name') required String displayName,
     String? gender,
     @JsonKey(name: 'home_city') required String homeCity,
-    required List<PlayerRating> ratings,
-    required Overall overall,
+    required double rating,
+    required double rd,
+    @JsonKey(name: 'matches_played') required int matchesPlayed,
     int? rank,
   }) = _PublicPlayer;
 
@@ -24,7 +24,6 @@ class PublicPlayer with _$PublicPlayer {
       _$PublicPlayerFromJson(json);
 }
 
-/// Stats between the current user and a target player.
 @freezed
 class HeadToHead with _$HeadToHead {
   const factory HeadToHead({

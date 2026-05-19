@@ -12,36 +12,19 @@ class RatingHistoryChart extends StatelessWidget {
   const RatingHistoryChart({super.key, required this.events});
   final List<RatingHistoryPoint> events;
 
-  /// Combine S + D events into a single "overall rating after this event"
-  /// series. We rebuild a running per-format rating map as we walk events
-  /// in time order, then for each event compute the match-count-weighted
-  /// average using the per-format match counts up to that point.
-  List<({DateTime t, double rating})> _overallSeries() {
+  /// Sort events chronologically and emit (time, rating_after) points.
+  /// Single-rating system: no weighting needed.
+  List<({DateTime t, double rating})> _series() {
     if (events.isEmpty) return const [];
     final sorted = [...events]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    final lastRating = <String, double>{};
-    final count = <String, int>{};
-    final out = <({DateTime t, double rating})>[];
-    for (final e in sorted) {
-      lastRating[e.format] = e.ratingAfter;
-      count[e.format] = (count[e.format] ?? 0) + 1;
-      double weighted = 0;
-      int total = 0;
-      lastRating.forEach((fmt, r) {
-        final c = count[fmt] ?? 0;
-        weighted += r * c;
-        total += c;
-      });
-      if (total > 0) {
-        out.add((t: e.createdAt, rating: weighted / total));
-      }
-    }
-    return out;
+    return [
+      for (final e in sorted) (t: e.createdAt, rating: e.ratingAfter),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final series = _overallSeries();
+    final series = _series();
     if (series.length < 2) {
       return Padding(
         padding: const EdgeInsets.symmetric(

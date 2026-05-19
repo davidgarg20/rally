@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.firebase import FirebaseIdentity
 from app.db.models import (
-    Match, MatchInvite, MatchParticipant, Player, PlayerRating, RatingEvent,
+    Match, MatchInvite, MatchParticipant, Player, RatingEvent,
 )
 from app.errors import Conflict, NotFound
 from app.players.schemas import PlayerCreate, PlayerUpdate
@@ -52,10 +52,6 @@ async def create_player(
     )
     session.add(p)
     await session.flush()
-    session.add_all([
-        PlayerRating(player_id=p.id, format="S"),
-        PlayerRating(player_id=p.id, format="D"),
-    ])
 
     # Claim any pending match invites that named this phone. Each invite row
     # becomes a match_participants row on the same team; the invite is
@@ -115,15 +111,6 @@ async def get_me_or_404(
     if not p:
         raise NotFound("player not found", code="player_not_found")
     return p
-
-
-async def load_ratings(
-    session: AsyncSession, player_id: uuid.UUID
-) -> list[PlayerRating]:
-    res = await session.execute(
-        select(PlayerRating).where(PlayerRating.player_id == player_id)
-    )
-    return list(res.scalars().all())
 
 
 async def list_my_matches(

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Header, HTTPException, status
 from sqlalchemy import select
 
 from app.config import settings
-from app.db.models import Match, PlayerRating, RatingEvent
+from app.db.models import Match, RatingEvent
 from app.deps import DbSession
 from app.matches import service
 from app.matches.validators import match_winner
@@ -68,31 +68,24 @@ async def age_ratings(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "bad internal secret")
 
     cutoff = datetime.now(UTC) - timedelta(days=days)
-    # Find (player_id, format) pairs whose most recent rating_event is older
-    # than cutoff. Players with no events yet aren't aged — their RD is
-    # already at the initial value.
+    # Find players whose most recent rating_event is older than cutoff.
+    # Players with no events yet aren't aged — their RD is already at
+    # the initial value.
     res = await session.execute(
-        select(
-            RatingEvent.player_id,
-            RatingEvent.format,
-        )
-        .distinct()
+        select(RatingEvent.player_id).distinct()
     )
     aged = 0
-    for player_id, fmt in res.all():
+    for (player_id,) in res.all():
         last = await session.execute(
             select(RatingEvent.created_at)
-            .where(
-                (RatingEvent.player_id == player_id)
-                & (RatingEvent.format == fmt)
-            )
+            .where(RatingEvent.player_id == player_id)
             .order_by(RatingEvent.created_at.desc())
             .limit(1)
         )
         last_at = last.scalar_one_or_none()
         if last_at is None or last_at >= cutoff:
             continue
-        await age_rd_for_inactivity(session, player_id, fmt, days)
+        await age_rd_for_inactivity(session, player_id, days)
         aged += 1
     await session.commit()
     return {"aged": aged}

@@ -22,7 +22,6 @@ RatingHistoryPoint _$RatingHistoryPointFromJson(Map<String, dynamic> json) {
 mixin _$RatingHistoryPoint {
   @JsonKey(name: 'match_id')
   String get matchId => throw _privateConstructorUsedError;
-  String get format => throw _privateConstructorUsedError;
   @JsonKey(name: 'rating_after')
   double get ratingAfter => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -46,7 +45,6 @@ abstract class $RatingHistoryPointCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: 'match_id') String matchId,
-      String format,
       @JsonKey(name: 'rating_after') double ratingAfter,
       @JsonKey(name: 'created_at') DateTime createdAt});
 }
@@ -67,7 +65,6 @@ class _$RatingHistoryPointCopyWithImpl<$Res, $Val extends RatingHistoryPoint>
   @override
   $Res call({
     Object? matchId = null,
-    Object? format = null,
     Object? ratingAfter = null,
     Object? createdAt = null,
   }) {
@@ -75,10 +72,6 @@ class _$RatingHistoryPointCopyWithImpl<$Res, $Val extends RatingHistoryPoint>
       matchId: null == matchId
           ? _value.matchId
           : matchId // ignore: cast_nullable_to_non_nullable
-              as String,
-      format: null == format
-          ? _value.format
-          : format // ignore: cast_nullable_to_non_nullable
               as String,
       ratingAfter: null == ratingAfter
           ? _value.ratingAfter
@@ -102,7 +95,6 @@ abstract class _$$RatingHistoryPointImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: 'match_id') String matchId,
-      String format,
       @JsonKey(name: 'rating_after') double ratingAfter,
       @JsonKey(name: 'created_at') DateTime createdAt});
 }
@@ -121,7 +113,6 @@ class __$$RatingHistoryPointImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? matchId = null,
-    Object? format = null,
     Object? ratingAfter = null,
     Object? createdAt = null,
   }) {
@@ -129,10 +120,6 @@ class __$$RatingHistoryPointImplCopyWithImpl<$Res>
       matchId: null == matchId
           ? _value.matchId
           : matchId // ignore: cast_nullable_to_non_nullable
-              as String,
-      format: null == format
-          ? _value.format
-          : format // ignore: cast_nullable_to_non_nullable
               as String,
       ratingAfter: null == ratingAfter
           ? _value.ratingAfter
@@ -151,7 +138,6 @@ class __$$RatingHistoryPointImplCopyWithImpl<$Res>
 class _$RatingHistoryPointImpl implements _RatingHistoryPoint {
   const _$RatingHistoryPointImpl(
       {@JsonKey(name: 'match_id') required this.matchId,
-      required this.format,
       @JsonKey(name: 'rating_after') required this.ratingAfter,
       @JsonKey(name: 'created_at') required this.createdAt});
 
@@ -162,8 +148,6 @@ class _$RatingHistoryPointImpl implements _RatingHistoryPoint {
   @JsonKey(name: 'match_id')
   final String matchId;
   @override
-  final String format;
-  @override
   @JsonKey(name: 'rating_after')
   final double ratingAfter;
   @override
@@ -172,7 +156,7 @@ class _$RatingHistoryPointImpl implements _RatingHistoryPoint {
 
   @override
   String toString() {
-    return 'RatingHistoryPoint(matchId: $matchId, format: $format, ratingAfter: $ratingAfter, createdAt: $createdAt)';
+    return 'RatingHistoryPoint(matchId: $matchId, ratingAfter: $ratingAfter, createdAt: $createdAt)';
   }
 
   @override
@@ -181,7 +165,6 @@ class _$RatingHistoryPointImpl implements _RatingHistoryPoint {
         (other.runtimeType == runtimeType &&
             other is _$RatingHistoryPointImpl &&
             (identical(other.matchId, matchId) || other.matchId == matchId) &&
-            (identical(other.format, format) || other.format == format) &&
             (identical(other.ratingAfter, ratingAfter) ||
                 other.ratingAfter == ratingAfter) &&
             (identical(other.createdAt, createdAt) ||
@@ -190,8 +173,7 @@ class _$RatingHistoryPointImpl implements _RatingHistoryPoint {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, matchId, format, ratingAfter, createdAt);
+  int get hashCode => Object.hash(runtimeType, matchId, ratingAfter, createdAt);
 
   /// Create a copy of RatingHistoryPoint
   /// with the given fields replaced by the non-null parameter values.
@@ -213,7 +195,6 @@ class _$RatingHistoryPointImpl implements _RatingHistoryPoint {
 abstract class _RatingHistoryPoint implements RatingHistoryPoint {
   const factory _RatingHistoryPoint(
           {@JsonKey(name: 'match_id') required final String matchId,
-          required final String format,
           @JsonKey(name: 'rating_after') required final double ratingAfter,
           @JsonKey(name: 'created_at') required final DateTime createdAt}) =
       _$RatingHistoryPointImpl;
@@ -224,8 +205,6 @@ abstract class _RatingHistoryPoint implements RatingHistoryPoint {
   @override
   @JsonKey(name: 'match_id')
   String get matchId;
-  @override
-  String get format;
   @override
   @JsonKey(name: 'rating_after')
   double get ratingAfter;

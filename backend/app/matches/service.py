@@ -201,7 +201,7 @@ async def preview_rating_deltas(
     Doesn't mutate any persisted state. Returns a list of
     {player_id, rating_before, rating_after} dicts.
     """
-    from app.db.models import PlayerRating
+    from app.db.models import Player
     from app.rating import engine
     from app.rating.glicko2 import Player as RatingPlayer
 
@@ -215,27 +215,19 @@ async def preview_rating_deltas(
     w_score = max(g.team1_points, g.team2_points)
     l_score = min(g.team1_points, g.team2_points)
 
-    fmt = match.format
-    # Load current ratings.
-    rating_for: dict = {}
+    # Load current ratings (one per player, single rating system).
+    eng_players: dict = {}
     for mp, _p in parts:
         res = await session.execute(
-            select(PlayerRating).where(
-                (PlayerRating.player_id == mp.player_id)
-                & (PlayerRating.format == fmt)
-            )
+            select(Player).where(Player.id == mp.player_id)
         )
-        pr = res.scalar_one()
-        rating_for[mp.player_id] = pr
+        pl = res.scalar_one()
+        eng_players[mp.player_id] = RatingPlayer(
+            rating=pl.rating, rd=pl.rd, vol=pl.volatility,
+        )
+    befores = {pid: rp.rating for pid, rp in eng_players.items()}
 
-    # Build engine Player instances (deep-copy state — engine mutates).
-    eng_players = {
-        pid: RatingPlayer(rating=pr.rating, rd=pr.rd, vol=pr.volatility)
-        for pid, pr in rating_for.items()
-    }
-    befores = {pid: pl.rating for pid, pl in eng_players.items()}
-
-    if fmt == "S":
+    if match.format == "S":
         winner = next(mp for mp, _p in parts if mp.team == winner_team)
         loser = next(mp for mp, _p in parts if mp.team != winner_team)
         engine.update_singles(

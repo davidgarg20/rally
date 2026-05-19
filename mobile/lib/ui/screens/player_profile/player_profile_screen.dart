@@ -114,14 +114,14 @@ class PlayerProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          (p.overall.rating ?? 1500).round().toString(),
+                          p.rating.round().toString(),
                           style: RallyText.rating,
                         ),
                         RallySpace.hGapSm,
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Text(
-                            '${p.overall.matchesPlayed} matches'
+                            '${p.matchesPlayed} matches'
                             '${p.rank != null ? '  ·  #${p.rank} in ${p.homeCity}' : ''}',
                             style: RallyText.caption,
                           ),

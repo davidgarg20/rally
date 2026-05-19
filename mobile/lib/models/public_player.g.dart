@@ -13,10 +13,9 @@ _$PublicPlayerImpl _$$PublicPlayerImplFromJson(Map<String, dynamic> json) =>
       displayName: json['display_name'] as String,
       gender: json['gender'] as String?,
       homeCity: json['home_city'] as String,
-      ratings: (json['ratings'] as List<dynamic>)
-          .map((e) => PlayerRating.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      overall: Overall.fromJson(json['overall'] as Map<String, dynamic>),
+      rating: (json['rating'] as num).toDouble(),
+      rd: (json['rd'] as num).toDouble(),
+      matchesPlayed: (json['matches_played'] as num).toInt(),
       rank: (json['rank'] as num?)?.toInt(),
     );
 
@@ -27,8 +26,9 @@ Map<String, dynamic> _$$PublicPlayerImplToJson(_$PublicPlayerImpl instance) =>
       'display_name': instance.displayName,
       'gender': instance.gender,
       'home_city': instance.homeCity,
-      'ratings': instance.ratings,
-      'overall': instance.overall,
+      'rating': instance.rating,
+      'rd': instance.rd,
+      'matches_played': instance.matchesPlayed,
       'rank': instance.rank,
     };
 
