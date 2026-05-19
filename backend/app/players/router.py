@@ -7,7 +7,8 @@ from app.matches.router import _serialize as _serialize_match
 from app.matches.schemas import MatchOut
 from app.players import service
 from app.players.schemas import (
-    OverallOut, PlayerCreate, PlayerOut, PlayerUpdate, RatingOut,
+    HeadToHeadOut, OverallOut, PlayerCreate, PlayerOut, PlayerUpdate,
+    PublicPlayerOut, RatingOut,
 )
 
 def _compute_overall(ratings) -> OverallOut:
@@ -161,6 +162,151 @@ async def my_rating_history(session: DbSession, ident: CurrentIdentity,
                             days: int = 90) -> list[RatingHistoryPoint]:
     me = await service.get_me_or_404(session, ident)
     events = await service.rating_history(session, me.id, days)
+    return [RatingHistoryPoint(
+        match_id=str(e.match_id),
+        format=e.format,
+        rating_after=e.rating_after,
+        created_at=e.created_at,
+    ) for e in events]
+
+
+@router.get("/by-username/{username}", response_model=PublicPlayerOut)
+async def public_profile(
+    username: str, session: DbSession, _ident: CurrentIdentity,
+) -> PublicPlayerOut:
+    """Public profile for any player. No phone or DOB included."""
+    from app.errors import NotFound
+    from sqlalchemy import text
+
+    target = await service.get_by_username(session, username)
+    if not target:
+        raise NotFound("player not found", code="player_not_found")
+
+    ratings = await service.load_ratings(session, target.id)
+    target_overall = _compute_overall(ratings).rating
+    rank: int | None = None
+
+    if target_overall is not None:
+        # Rank in city = (# players with strictly higher overall) + 1.
+        # Computed via raw SQL — clearest path for the weighted-average ranking.
+        row = (await session.execute(
+            text(
+                """
+                with overall_per_player as (
+                    select p.id,
+                           sum(pr.rating * pr.matches_played)
+                             / nullif(sum(pr.matches_played), 0) as ov
+                    from players p
+                    join player_ratings pr on pr.player_id = p.id
+                    where p.home_city = :city
+                    group by p.id
+                    having sum(pr.matches_played) > 0
+                )
+                select count(*) + 1
+                from overall_per_player
+                where ov > :target_ov
+                """
+            ),
+            {"city": target.home_city, "target_ov": target_overall},
+        )).scalar_one()
+        rank = int(row)
+
+    return PublicPlayerOut(
+        id=str(target.id),
+        username=target.username,
+        display_name=target.display_name,
+        gender=target.gender,
+        home_city=target.home_city,
+        ratings=[
+            RatingOut(format=r.format, rating=r.rating, rd=r.rd,
+                      matches_played=r.matches_played)
+            for r in ratings
+        ],
+        overall=_compute_overall(ratings),
+        rank=rank,
+    )
+
+
+@router.get("/by-username/{username}/head-to-head", response_model=HeadToHeadOut)
+async def head_to_head(
+    username: str, session: DbSession, ident: CurrentIdentity,
+) -> HeadToHeadOut:
+    """Wins/losses + last 5 matches between current user and target player."""
+    from app.db.models import MatchGame, MatchParticipant
+    from app.errors import NotFound
+    from sqlalchemy import select, text
+
+    me = await service.get_me_or_404(session, ident)
+    target = await service.get_by_username(session, username)
+    if not target:
+        raise NotFound("player not found", code="player_not_found")
+
+    # Find all validated matches where both players participated.
+    rows = (await session.execute(
+        text(
+            """
+            select m.id
+            from matches m
+            where m.status = 'validated'
+              and exists (select 1 from match_participants where match_id = m.id and player_id = :me)
+              and exists (select 1 from match_participants where match_id = m.id and player_id = :them)
+            order by m.played_at desc
+            """
+        ),
+        {"me": me.id, "them": target.id},
+    )).all()
+    match_ids = [r[0] for r in rows]
+
+    me_wins = 0
+    opp_wins = 0
+    last_matches = []
+
+    from app.matches.router import _serialize as _serialize_match_inline
+    from app.matches.service import load_match
+
+    for mid in match_ids:
+        match = await load_match(session, mid)
+        # Determine winner by scanning the single game (single-set engine).
+        games_res = await session.execute(
+            select(MatchGame).where(MatchGame.match_id == mid)
+        )
+        games = list(games_res.scalars().all())
+        if not games:
+            continue
+        g = games[0]
+        winning_team = 1 if g.team1_points > g.team2_points else 2
+        # Which team was I on?
+        parts_res = await session.execute(
+            select(MatchParticipant).where(MatchParticipant.match_id == mid)
+        )
+        parts = list(parts_res.scalars().all())
+        my_team = next((p.team for p in parts if p.player_id == me.id), None)
+        if my_team == winning_team:
+            me_wins += 1
+        else:
+            opp_wins += 1
+        if len(last_matches) < 5:
+            last_matches.append(await _serialize_match_inline(session, match))
+
+    return HeadToHeadOut(
+        me_wins=me_wins,
+        opponent_wins=opp_wins,
+        last_matches=last_matches,
+    )
+
+
+@router.get("/by-username/{username}/rating-history",
+            response_model=list[RatingHistoryPoint])
+async def public_rating_history(
+    username: str, session: DbSession, _ident: CurrentIdentity,
+    days: int = 90,
+) -> list[RatingHistoryPoint]:
+    """Rating events for any player. Public-readable like profile."""
+    from app.errors import NotFound
+    target = await service.get_by_username(session, username)
+    if not target:
+        raise NotFound("player not found", code="player_not_found")
+    events = await service.rating_history(session, target.id, days)
     return [RatingHistoryPoint(
         match_id=str(e.match_id),
         format=e.format,

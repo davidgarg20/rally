@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+
+import 'package:rally/models/player.dart' as player_model;
+import 'package:rally/ui/share/share_cards.dart';
+import 'package:rally/ui/share/share_sheet.dart';
 
 import 'package:rally/api/matches_api.dart';
 import 'package:rally/models/match.dart';
@@ -25,7 +31,23 @@ class MatchDetailScreen extends ConsumerWidget {
     final me = ref.watch(currentPlayerProvider).valueOrNull;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Match')),
+      appBar: AppBar(
+        title: const Text('Match'),
+        actions: [
+          match.when(
+            data: (m) {
+              if (m.status != MatchStatus.validated) return const SizedBox.shrink();
+              return IconButton(
+                icon: const Icon(Icons.share_outlined),
+                tooltip: 'Share',
+                onPressed: () => _shareMatch(context, m, me),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       body: AsyncValueView(
         value: match,
         data: (m) => _MatchView(match: m, myPhone: me?.phoneE164, refresh: () {
@@ -117,6 +139,9 @@ class _MatchViewState extends ConsumerState<_MatchView> {
                 for (final p in m.participants)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
+                    onTap: p.username == null
+                        ? null
+                        : () => context.push('/u/${p.username}'),
                     leading: CircleAvatar(child: Text('${p.team}')),
                     title: Text(p.displayName ?? '(invited) ${p.phoneE164}'),
                     subtitle: Text([
@@ -189,4 +214,92 @@ class _DeltaText extends StatelessWidget {
 
 extension<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
+}
+
+
+/// Build a one-line share string about this match and trigger the OS share
+/// sheet. Tries to lead with whether the current user won.
+Future<void> _shareMatch(BuildContext context, MatchOut m, player_model.Player? me) async {
+  String? formatPart() =>
+      m.format == MatchFormat.singles ? 'singles' : 'doubles';
+
+  // Score
+  String? scoreText() {
+    if (m.games.isEmpty) return null;
+    final g = m.games.first;
+    final hi = g.team1Points > g.team2Points ? g.team1Points : g.team2Points;
+    final lo = g.team1Points > g.team2Points ? g.team2Points : g.team1Points;
+    return '$hi–$lo';
+  }
+
+  // Did the current user win?
+  int? myTeam;
+  if (me != null) {
+    for (final p in m.participants) {
+      if (p.phoneE164 == me.phoneE164) {
+        myTeam = p.team;
+        break;
+      }
+    }
+  }
+  int? winningTeam;
+  if (m.games.isNotEmpty) {
+    final g = m.games.first;
+    if (g.team1Points != g.team2Points) {
+      winningTeam = g.team1Points > g.team2Points ? 1 : 2;
+    }
+  }
+  final iWon = (myTeam != null && winningTeam != null) ? myTeam == winningTeam : null;
+
+  // My rating delta
+  double? myDelta;
+  if (me != null) {
+    for (final d in m.ratingDeltas) {
+      if (d.playerId == me.id) {
+        myDelta = d.ratingAfter - d.ratingBefore;
+        break;
+      }
+    }
+  }
+
+  // Opponent username (best effort: first participant not on my team with a username)
+  String? oppHandle;
+  if (myTeam != null) {
+    for (final p in m.participants) {
+      if (p.team != myTeam && p.username != null) {
+        oppHandle = '@${p.username}';
+        break;
+      }
+    }
+  }
+
+  final lead = switch (iWon) {
+    true => 'Beat',
+    false => 'Lost to',
+    null => 'Played',
+  };
+  final scorePart = scoreText() == null ? '' : ' ${scoreText()}';
+  final oppPart = oppHandle == null ? '' : ' $oppHandle';
+  final deltaPart = myDelta == null || myDelta == 0
+      ? ''
+      : ' (${myDelta > 0 ? '+' : ''}${myDelta.round()})';
+  final ratingPart = me?.overall.rating == null
+      ? ''
+      : ' · Rally rating ${me!.overall.rating!.round()}';
+
+  final text = '$lead$oppPart$scorePart in ${formatPart()}$deltaPart$ratingPart on Rally.';
+
+  if (me == null) {
+    // No identity loaded yet — fall back to text-only share.
+    await Share.share(text);
+    return;
+  }
+  await ShareCardSheet.show(
+    context,
+    cards: [
+      ResultCard(match: m, me: me),
+      RatingShareCard(me: me),
+    ],
+    shareText: text,
+  );
 }

@@ -6,6 +6,7 @@ import 'package:rally/core/providers.dart';
 import 'package:rally/core/result.dart';
 import 'package:rally/models/match.dart';
 import 'package:rally/models/player.dart';
+import 'package:rally/models/public_player.dart';
 import 'package:rally/models/rating_event.dart';
 
 class PlayersApi {
@@ -25,6 +26,32 @@ class PlayersApi {
           'home_city': homeCity,
         });
         return Player.fromJson(res.data as Map<String, dynamic>);
+      });
+
+  Future<Result<PublicPlayer, AppError>> publicProfile(String username) =>
+      _wrap(() async {
+        final res = await _client.dio.get('/players/by-username/$username');
+        return PublicPlayer.fromJson(res.data as Map<String, dynamic>);
+      });
+
+  Future<Result<HeadToHead, AppError>> headToHead(String username) =>
+      _wrap(() async {
+        final res = await _client.dio.get(
+          '/players/by-username/$username/head-to-head',
+        );
+        return HeadToHead.fromJson(res.data as Map<String, dynamic>);
+      });
+
+  Future<Result<List<RatingHistoryPoint>, AppError>> publicRatingHistory(
+    String username, {int days = 90,
+  }) => _wrap(() async {
+        final res = await _client.dio.get(
+          '/players/by-username/$username/rating-history',
+          queryParameters: {'days': days},
+        );
+        return (res.data as List)
+            .map((e) => RatingHistoryPoint.fromJson(e as Map<String, dynamic>))
+            .toList();
       });
 
   Future<Result<List<({String id, String username, String displayName})>, AppError>>

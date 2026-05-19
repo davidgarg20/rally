@@ -12,7 +12,12 @@ import 'package:rally/ui/widgets/opponent_field.dart';
 import 'package:rally/ui/widgets/score_stepper.dart';
 
 class LogMatchScreen extends ConsumerStatefulWidget {
-  const LogMatchScreen({super.key});
+  const LogMatchScreen({super.key, this.prefilledOpponent});
+
+  /// Optional username to pre-fill into the first opponent slot.
+  /// Passed from PlayerProfileScreen's "Log a match with @x" button.
+  final String? prefilledOpponent;
+
   @override
   ConsumerState<LogMatchScreen> createState() => _LogMatchScreenState();
 }
@@ -25,6 +30,14 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
   final _opp1 = TextEditingController();
   final _opp2 = TextEditingController();
   final _venue = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.prefilledOpponent != null) {
+      _opp1.text = widget.prefilledOpponent!;
+    }
+  }
 
   /// Accept a username (@asha) or a phone number. Backend resolves either way.
   String _normalizeIdentifier(String raw) {

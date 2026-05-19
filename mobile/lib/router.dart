@@ -11,6 +11,7 @@ import 'package:rally/ui/screens/match_detail/match_detail_screen.dart';
 import 'package:rally/ui/screens/onboarding/otp_screen.dart';
 import 'package:rally/ui/screens/onboarding/phone_screen.dart';
 import 'package:rally/ui/screens/onboarding/profile_screen.dart';
+import 'package:rally/ui/screens/player_profile/player_profile_screen.dart';
 import 'package:rally/ui/screens/profile/profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -46,11 +47,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       }),
       GoRoute(path: '/onboarding/profile', builder: (_, __) => const ProfileSetupScreen()),
       GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
-      GoRoute(path: '/log', builder: (_, __) => const LogMatchScreen()),
+      GoRoute(
+        path: '/log',
+        builder: (_, s) => LogMatchScreen(
+          prefilledOpponent: s.uri.queryParameters['opponent'],
+        ),
+      ),
       GoRoute(path: '/match/:id', builder: (_, s) =>
           MatchDetailScreen(matchId: s.pathParameters['id']!)),
       GoRoute(path: '/leaderboard', builder: (_, __) => const LeaderboardScreen()),
       GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+      GoRoute(
+        path: '/u/:username',
+        builder: (_, s) => PlayerProfileScreen(
+          username: s.pathParameters['username']!,
+        ),
+      ),
     ],
   );
 });

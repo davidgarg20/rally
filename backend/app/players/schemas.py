@@ -38,3 +38,22 @@ class PlayerOut(BaseModel):
     home_city: str
     ratings: list[RatingOut]
     overall: OverallOut
+
+
+class PublicPlayerOut(BaseModel):
+    """Public profile — no phone, no DOB. Anyone authenticated can read this."""
+    id: str
+    username: str
+    display_name: str
+    gender: str | None
+    home_city: str
+    ratings: list[RatingOut]
+    overall: OverallOut
+    rank: int | None  # 1-based rank in their city; null if not on the leaderboard yet
+
+
+class HeadToHeadOut(BaseModel):
+    """Stats between the requester (`me`) and a target player."""
+    me_wins: int
+    opponent_wins: int
+    last_matches: list  # list of MatchOut from matches.schemas (avoid circular)
