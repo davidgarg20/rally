@@ -10,7 +10,6 @@ from app.db.models import (
     Match, MatchGame, MatchInvite, MatchParticipant, Player,
 )
 from app.errors import BadRequest, Conflict, Forbidden, NotFound
-from app.matches.dedup import find_duplicate
 from app.matches.schemas import MatchSubmit
 from app.matches.validators import match_winner
 from app.rating.service import apply_match_rating
@@ -93,9 +92,9 @@ async def submit_match(
         raise BadRequest(str(e), code="invalid_score") from e
 
     all_phones = body.team1_phones + body.team2_phones
-    dup = await find_duplicate(session, submitter.id, body.played_at, all_phones)
-    if dup:
-        raise Conflict("duplicate match", code="duplicate_match")
+    # Dedup disabled: a player can legitimately play the same opponent
+    # multiple times in a row (5-min games are common in rec badminton).
+    # Accidental double-submits can be undone via dispute.
 
     res = await session.execute(
         select(Player).where(Player.phone_e164.in_(all_phones))
@@ -304,53 +303,4 @@ async def confirm_match(
             data={"match_id": str(match.id), "kind": "match_validated"},
         )
 
-    return match
-
-
-async def dispute_match(
-    session: AsyncSession, ident: FirebaseIdentity, match_id: uuid.UUID
-) -> Match:
-    from app.db.models import RatingEvent, PlayerRating
-    from sqlalchemy import delete
-
-    me = await get_by_firebase_uid(session, ident.uid)
-    if not me:
-        raise NotFound("player not found", code="player_not_found")
-
-    match = await load_match(session, match_id)
-    if match.status == "disputed":
-        return match
-    if match.status not in ("pending", "validated"):
-        raise Conflict(f"cannot dispute {match.status} match", code="cannot_dispute")
-
-    parts = await load_participants(session, match.id)
-    my_row = next((mp for mp, p in parts if p.id == me.id), None)
-    if my_row is None:
-        raise Forbidden("not a participant", code="not_a_participant")
-
-    if match.status == "validated":
-        events_res = await session.execute(
-            select(RatingEvent).where(RatingEvent.match_id == match.id)
-        )
-        events = list(events_res.scalars().all())
-        for ev in events:
-            res = await session.execute(
-                select(PlayerRating).where(
-                    (PlayerRating.player_id == ev.player_id)
-                    & (PlayerRating.format == ev.format)
-                )
-            )
-            pr = res.scalar_one()
-            delta = ev.rating_after - ev.rating_before
-            rd_delta = ev.rd_after - ev.rd_before
-            pr.rating = pr.rating - delta
-            pr.rd = pr.rd - rd_delta
-            pr.matches_played = max(0, pr.matches_played - 1)
-        await session.execute(
-            delete(RatingEvent).where(RatingEvent.match_id == match.id)
-        )
-
-    my_row.disputed_at = datetime.now(UTC)
-    match.status = "disputed"
-    await session.commit()
     return match

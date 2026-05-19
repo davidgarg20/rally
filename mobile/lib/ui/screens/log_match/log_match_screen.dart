@@ -68,7 +68,9 @@ class _LogMatchScreenState extends ConsumerState<LogMatchScreen> {
       onOk: (m) {
         ref.invalidate(recentMatchesProvider);
         ref.invalidate(pendingMatchesProvider);
-        context.go('/match/${m.id}');
+        // Replace the wizard with the match detail screen. AppBar back
+        // button takes the user to /home, which clears the stack.
+        context.pushReplacement('/match/${m.id}');
       },
       onErr: (e) => setState(() {
         _error = e.message;

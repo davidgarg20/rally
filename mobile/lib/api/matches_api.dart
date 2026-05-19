@@ -38,11 +38,6 @@ class MatchesApi {
         return MatchOut.fromJson(res.data as Map<String, dynamic>);
       });
 
-  Future<Result<MatchOut, AppError>> dispute(String id) => _wrap(() async {
-        final res = await _client.dio.post('/matches/$id/dispute');
-        return MatchOut.fromJson(res.data as Map<String, dynamic>);
-      });
-
   /// Returns predicted rating delta per player if this match is confirmed.
   Future<Result<List<({String playerId, double before, double after})>, AppError>>
       preview(String id) => _wrap(() async {

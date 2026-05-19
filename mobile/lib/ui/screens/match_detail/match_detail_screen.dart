@@ -158,29 +158,10 @@ class _MatchViewState extends ConsumerState<_MatchView> {
         ),
         if (_isMine && m.status == MatchStatus.pending && !_amSubmitter) ...[
           const SizedBox(height: 12),
-          Row(children: [
-            Expanded(
-              child: FilledButton(
-                onPressed: _busy ? null : () =>
-                    _do(() => ref.read(matchesApiProvider).confirm(m.id)),
-                child: const Text('Confirm'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _busy ? null : () =>
-                    _do(() => ref.read(matchesApiProvider).dispute(m.id)),
-                child: const Text('Dispute'),
-              ),
-            ),
-          ]),
-        ] else if (_isMine && m.status == MatchStatus.validated) ...[
-          const SizedBox(height: 12),
-          OutlinedButton(
+          FilledButton(
             onPressed: _busy ? null : () =>
-                _do(() => ref.read(matchesApiProvider).dispute(m.id)),
-            child: const Text('Dispute (within 7 days)'),
+                _do(() => ref.read(matchesApiProvider).confirm(m.id)),
+            child: const Text('Confirm'),
           ),
         ],
         if (_error != null) ...[

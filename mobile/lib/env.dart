@@ -3,7 +3,7 @@ enum AppEnv { dev, staging, prod }
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://sector-semisweet-jawless.ngrok-free.dev',
+    defaultValue: 'https://mass-charming-don-far.trycloudflare.com',
   );
 
   static const String _envName = String.fromEnvironment(

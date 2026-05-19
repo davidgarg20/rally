@@ -96,24 +96,50 @@ class _OpponentFieldState extends ConsumerState<OpponentField> {
         );
       },
       optionsViewBuilder: (ctx, onSelected, options) {
+        // Width matches the field. Material elevation makes the overlay a
+        // distinct render layer so taps don't bleed into parents.
         return Align(
           alignment: Alignment.topLeft,
           child: Material(
-            elevation: 4,
+            color: Colors.white,
+            elevation: 6,
             borderRadius: BorderRadius.circular(8),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 240, maxWidth: 360),
+              constraints: BoxConstraints(
+                maxHeight: 240,
+                maxWidth: MediaQuery.of(ctx).size.width - 32,
+              ),
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
                 itemCount: options.length,
                 itemBuilder: (_, i) {
                   final s = options.elementAt(i);
-                  return ListTile(
-                    dense: true,
-                    title: Text(s.displayName),
-                    subtitle: Text('@${s.username}'),
+                  // InkWell + explicit opaque hit-testing so the Stepper
+                  // / scrollable parent doesn't steal the tap.
+                  return InkWell(
                     onTap: () => onSelected(s),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.displayName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              )),
+                          const SizedBox(height: 2),
+                          Text('@${s.username}',
+                              style: const TextStyle(
+                                color: Color(0xFF5F6B7A),
+                                fontSize: 12,
+                              )),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
