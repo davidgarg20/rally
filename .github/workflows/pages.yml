@@ -38,6 +38,8 @@ jobs:
       - name: Build static GitHub Pages site
         run: npm run build:pages
         working-directory: website
+        env:
+          VITE_RALLY_API_URL: ${{ vars.RALLY_API_URL }}
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

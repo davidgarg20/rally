@@ -1,7 +1,14 @@
 import uuid
 from datetime import date, datetime
+
 from sqlalchemy import (
-    CheckConstraint, Date, DateTime, Double, ForeignKey, Integer, String,
+    CheckConstraint,
+    Date,
+    DateTime,
+    Double,
+    ForeignKey,
+    Integer,
+    String,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -9,12 +16,11 @@ from sqlalchemy.sql import func
 
 from app.db.base import Base
 
+
 class Player(Base):
     __tablename__ = "players"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     phone_e164: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String, nullable=False)
@@ -30,9 +36,7 @@ class Player(Base):
     rating: Mapped[float] = mapped_column(
         Double, nullable=False, default=1500.0, server_default="1500"
     )
-    rd: Mapped[float] = mapped_column(
-        Double, nullable=False, default=350.0, server_default="350"
-    )
+    rd: Mapped[float] = mapped_column(Double, nullable=False, default=350.0, server_default="350")
     volatility: Mapped[float] = mapped_column(
         Double, nullable=False, default=0.06, server_default="0.06"
     )
@@ -48,12 +52,22 @@ class Player(Base):
         ),
     )
 
+
+class UserAccount(Base):
+    __tablename__ = "user_accounts"
+
+    uid: Mapped[str] = mapped_column(String, primary_key=True)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class Match(Base):
     __tablename__ = "matches"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     format: Mapped[str] = mapped_column(String, nullable=False)
     played_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     venue: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -61,12 +75,8 @@ class Match(Base):
         UUID(as_uuid=True), ForeignKey("players.id"), nullable=False
     )
     status: Mapped[str] = mapped_column(String, nullable=False)
-    validation_deadline: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    validated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    validation_deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    validated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -91,16 +101,10 @@ class MatchParticipant(Base):
     )
     team: Mapped[int] = mapped_column(Integer, nullable=False)
     is_submitter: Mapped[bool] = mapped_column(nullable=False, default=False)
-    confirmed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    disputed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    disputed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    __table_args__ = (
-        CheckConstraint("team in (1,2)", name="participant_team_chk"),
-    )
+    __table_args__ = (CheckConstraint("team in (1,2)", name="participant_team_chk"),)
 
 
 class MatchGame(Base):
@@ -113,9 +117,7 @@ class MatchGame(Base):
     team1_points: Mapped[int] = mapped_column(Integer, nullable=False)
     team2_points: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    __table_args__ = (
-        CheckConstraint("game_no between 1 and 5", name="game_no_chk"),
-    )
+    __table_args__ = (CheckConstraint("game_no between 1 and 5", name="game_no_chk"),)
 
 
 class RatingEvent(Base):
@@ -150,6 +152,4 @@ class MatchInvite(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    __table_args__ = (
-        CheckConstraint("team in (1,2)", name="invite_team_chk"),
-    )
+    __table_args__ = (CheckConstraint("team in (1,2)", name="invite_team_chk"),)

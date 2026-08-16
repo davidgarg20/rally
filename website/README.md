@@ -100,6 +100,11 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 Pushes to `main` automatically deploy the website to
 `https://davidgarg20.github.io/rally/` through the repository's Pages workflow.
 
+The player app is enabled in production when the repository Actions variable
+`RALLY_API_URL` contains the deployed backend origin, for example
+`https://rally-api.example.com`. Local development uses `http://localhost:8000`
+when the variable is not set.
+
 ## Learn More
 
 - [vinext Documentation](https://github.com/cloudflare/vinext)

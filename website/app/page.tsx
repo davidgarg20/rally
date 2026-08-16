@@ -1,6 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import RallyApp from "./rally-app";
+
+const appEnabled = import.meta.env.DEV || Boolean(import.meta.env.VITE_RALLY_API_URL);
 
 const leaderboard = {
   City: [
@@ -26,6 +29,7 @@ const leaderboard = {
 export default function Home() {
   const [board, setBoard] = useState<keyof typeof leaderboard>("City");
   const [joined, setJoined] = useState(false);
+  const [appOpen, setAppOpen] = useState(false);
 
   function submitWaitlist(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,7 +48,11 @@ export default function Home() {
           <a href="#ai-coach">AI Coach</a>
           <a href="#community">Leaderboards</a>
           <a href="#organizers">For organizers</a>
-          <a className="nav-cta" href="#waitlist">Join early access</a>
+          {appEnabled ? (
+            <button className="nav-cta nav-app-button" type="button" onClick={() => setAppOpen(true)}>Open Rally</button>
+          ) : (
+            <a className="nav-cta" href="#waitlist">Join early access</a>
+          )}
         </div>
       </nav>
 
@@ -57,7 +65,11 @@ export default function Home() {
             validate the score and discover who&apos;s really at your level.
           </p>
           <div className="hero-actions">
-            <a className="button primary" href="#waitlist">Get your Rally rating <span>↗</span></a>
+            {appEnabled ? (
+              <button className="button primary hero-app-button" type="button" onClick={() => setAppOpen(true)}>Get your Rally rating <span>↗</span></button>
+            ) : (
+              <a className="button primary" href="#waitlist">Get your Rally rating <span>↗</span></a>
+            )}
             <a className="text-link" href="#how">See how it works <span>↓</span></a>
           </div>
           <div className="hero-proof">
@@ -283,6 +295,7 @@ export default function Home() {
         <div className="footer-links"><a href="#how">How it works</a><a href="#community">Leaderboards</a><a href="#organizers">Organizers</a><a href="#waitlist">Early access</a></div>
         <div className="footer-bottom"><span>© 2026 Rally</span><span>Built for the game we love.</span></div>
       </footer>
+      {appEnabled && <RallyApp open={appOpen} onClose={() => setAppOpen(false)} />}
     </main>
   );
 }
