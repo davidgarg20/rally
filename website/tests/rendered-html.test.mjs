@@ -10,6 +10,8 @@ test("exports the Rally landing page for the repository base path", async () => 
   assert.match(html, /<title>Rally — Your badminton rating<\/title>/i);
   assert.match(html, /Every player/);
   assert.match(html, /deserves a/);
+  assert.match(html, /Rally AI Coach/);
+  assert.match(html, /Skill DNA/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
   assert.match(html, /https:\/\/davidgarg20\.github\.io\/rally\/og\.png/);
 

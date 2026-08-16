@@ -41,6 +41,7 @@ export default function Home() {
         </a>
         <div className="nav-links">
           <a href="#how">How it works</a>
+          <a href="#ai-coach">AI Coach</a>
           <a href="#community">Leaderboards</a>
           <a href="#organizers">For organizers</a>
           <a className="nav-cta" href="#waitlist">Join early access</a>
@@ -133,6 +134,57 @@ export default function Home() {
             <div className="number-jump"><small>NEW RATING</small><strong>4.2871</strong><span>+0.08</span></div>
             <h3>Watch your rating move</h3><p>See exactly how every performance shapes your Rally number.</p>
           </article>
+        </div>
+      </section>
+
+      <section className="ai-coach-section section-pad" id="ai-coach">
+        <div className="ai-coach-head">
+          <div>
+            <div className="section-kicker lime">Rally AI Coach · In development</div>
+            <h2>Your rating says <em>where.</em><br />AI shows you <em>why.</em></h2>
+          </div>
+          <div className="ai-coach-intro">
+            <p>Record a drill or match on your phone. Rally reads movement, shot patterns and recovery to turn footage into clear, evidence-backed coaching.</p>
+            <a className="button ai-coach-button" href="#waitlist">Join AI Coach early access <span>↗</span></a>
+          </div>
+        </div>
+
+        <div className="ai-coach-stage">
+          <div className="vision-card">
+            <div className="vision-head"><span>SESSION 04 · SINGLES</span><b>ANALYSING</b></div>
+            <div className="vision-court" aria-label="Illustration of Rally analysing badminton footage">
+              <div className="vision-lines" aria-hidden="true" />
+              <div className="vision-player" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
+              <div className="vision-shuttle" aria-hidden="true" />
+              <div className="vision-tag tag-contact">Contact height · Good</div>
+              <div className="vision-tag tag-recovery">Base recovery · 1.4s</div>
+              <div className="vision-scan" aria-hidden="true" />
+            </div>
+            <div className="vision-timeline"><span /><span /><b>SMASH DETECTED · 00:14.2</b></div>
+          </div>
+
+          <div className="skill-card">
+            <div className="skill-card-head"><div><small>VIDEO-DERIVED</small><h3>Skill DNA</h3></div><span>82% confidence</span></div>
+            <div className="skill-row"><span>Power</span><i><b style={{width: "74%"}} /></i><strong>74</strong></div>
+            <div className="skill-row"><span>Placement</span><i><b style={{width: "63%"}} /></i><strong>63</strong></div>
+            <div className="skill-row"><span>Footwork</span><i><b style={{width: "68%"}} /></i><strong>68</strong></div>
+            <div className="skill-row"><span>Defense</span><i><b style={{width: "71%"}} /></i><strong>71</strong></div>
+            <div className="skill-row"><span>Consistency</span><i><b style={{width: "56%"}} /></i><strong>56</strong></div>
+            <div className="coach-focus"><small>YOUR NEXT FOCUS</small><b>Prepare the split step earlier.</b><p>You recovered late after 6 of 10 attacking shots. Start your split step as your opponent makes contact.</p><span>3 clips support this insight →</span></div>
+          </div>
+        </div>
+
+        <div className="ai-capability-grid">
+          <article><span>01</span><h3>Smash mechanics</h3><p>Review contact timing, shoulder and hip rotation, follow-through and recovery—not just an unreliable speed estimate.</p></article>
+          <article><span>02</span><h3>Drop control</h3><p>See approximate placement, consistency and how effectively the same preparation hides your softer shots.</p></article>
+          <article><span>03</span><h3>Footwork &amp; weaknesses</h3><p>Map movement, split-step timing, late contacts and the court zones where rallies most often break down.</p></article>
+        </div>
+
+        <div className="ai-coach-footer">
+          <div><b>1</b><span>Record a drill<br />or full match</span></div><i>→</i>
+          <div><b>2</b><span>Vision measures<br />movement &amp; shots</span></div><i>→</i>
+          <div><b>3</b><span>AI explains<br />what to train next</span></div>
+          <p><strong>Kept separate by design.</strong> AI Skill DNA explains your game; only validated match results shape your Rally rating. Every insight includes a confidence level.</p>
         </div>
       </section>
 

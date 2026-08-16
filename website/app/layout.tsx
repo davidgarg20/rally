@@ -4,7 +4,7 @@ import "./globals.css";
 const siteUrl = new URL("https://davidgarg20.github.io/rally/");
 const title = "Rally — Your badminton rating";
 const description =
-  "The universal skill rating for amateur badminton players. Log matches, find your level and rise together.";
+  "The universal skill rating and AI video coach for amateur badminton players. Log matches, understand your game and rise together.";
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
