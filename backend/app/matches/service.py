@@ -40,6 +40,11 @@ def _check_team_shape(fmt: str, t1: list[str], t2: list[str]) -> None:
             f"player(s) on both teams: {sorted(overlap)}",
             code="player_on_both_teams",
         )
+    if len(set(t1 + t2)) != len(t1 + t2):
+        raise BadRequest(
+            "each player can appear only once in a match",
+            code="duplicate_player",
+        )
 
 
 async def _resolve_identifiers(

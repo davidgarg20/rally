@@ -26,6 +26,7 @@ type Participant = {
 
 type RallyMatch = {
   id: string;
+  format: "S" | "D";
   status: string;
   played_at: string;
   venue: string | null;
@@ -91,6 +92,140 @@ async function api<T>(path: string, init: RequestInit = {}, token?: string): Pro
   return body as T;
 }
 
+function PlayerPicker({ label, name, token }: { label: string; name: string; token: string }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PlayerSearchEntry[]>([]);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const inputId = `match-player-${name}`;
+  const resultsId = `${inputId}-results`;
+
+  useEffect(() => {
+    const cleanQuery = query.trim().replace(/^@/, "");
+    if (!open || !cleanQuery) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void api<PlayerSearchEntry[]>(`/players/search?q=${encodeURIComponent(cleanQuery)}`, {}, token)
+        .then((matches) => {
+          if (!cancelled) {
+            setResults(matches);
+            setSearchError(false);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setResults([]);
+            setSearchError(true);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setSearching(false);
+        });
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [open, query, token]);
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    setOpen(true);
+    setSearchError(false);
+    setActiveIndex(-1);
+    if (value.trim().replace(/^@/, "")) {
+      setSearching(true);
+    } else {
+      setSearching(false);
+      setResults([]);
+    }
+  }
+
+  function selectPlayer(selected: PlayerSearchEntry) {
+    setQuery(`@${selected.username}`);
+    setResults([]);
+    setOpen(false);
+    setSearching(false);
+    setSearchError(false);
+    setActiveIndex(-1);
+  }
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Escape" && open) {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+      return;
+    }
+    if (!open || results.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((current) => (current + 1) % results.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((current) => current <= 0 ? results.length - 1 : current - 1);
+    } else if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      selectPlayer(results[activeIndex]);
+    }
+  }
+
+  return (
+    <div
+      className="opponent-picker"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
+      <label htmlFor={inputId}>{label}</label>
+      <input
+        id={inputId}
+        name={name}
+        required
+        autoComplete="off"
+        placeholder="Search username or player name"
+        value={query}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-controls={resultsId}
+        aria-activedescendant={activeIndex >= 0 ? `${resultsId}-${results[activeIndex]?.id}` : undefined}
+        onChange={(event) => updateQuery(event.target.value)}
+        onFocus={() => setOpen(true)}
+        onKeyDown={handleKeyDown}
+      />
+      {open && (
+        <div className="opponent-results" id={resultsId} role="listbox" aria-label={`Matching players for ${label}`}>
+          {!query.trim() && <p>Start typing to find a registered player.</p>}
+          {query.trim() && searching && <p role="status">Finding players…</p>}
+          {query.trim() && !searching && searchError && <p>Player search is unavailable. Try again.</p>}
+          {query.trim() && !searching && !searchError && results.length === 0 && <p>No matching players found.</p>}
+          {!searching && results.map((result, index) => (
+            <button
+              type="button"
+              id={`${resultsId}-${result.id}`}
+              role="option"
+              aria-selected={activeIndex === index}
+              className={activeIndex === index ? "active" : ""}
+              key={result.id}
+              onMouseEnter={() => setActiveIndex(index)}
+              onClick={() => selectPlayer(result)}
+            >
+              <span className="opponent-avatar" aria-hidden="true">{result.display_name.slice(0, 1).toUpperCase()}</span>
+              <span><b>{result.display_name}</b><small>@{result.username}</small></span>
+              <i>Choose</i>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RallyApp({ open, onClose, preferredVenueId = null }: RallyAppProps) {
   const [token, setToken] = useState(() =>
     typeof window === "undefined" ? "" : window.localStorage.getItem(tokenKey) || "",
@@ -104,14 +239,9 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showMatchForm, setShowMatchForm] = useState(false);
+  const [matchFormat, setMatchFormat] = useState<"S" | "D">("S");
   const [venues, setVenues] = useState<Venue[]>(venueFixtures);
   const [selectedVenueId, setSelectedVenueId] = useState(preferredVenueId || "");
-  const [opponentQuery, setOpponentQuery] = useState("");
-  const [opponentResults, setOpponentResults] = useState<PlayerSearchEntry[]>([]);
-  const [opponentSearchOpen, setOpponentSearchOpen] = useState(false);
-  const [opponentSearchBusy, setOpponentSearchBusy] = useState(false);
-  const [opponentSearchError, setOpponentSearchError] = useState(false);
-  const [activeOpponentIndex, setActiveOpponentIndex] = useState(-1);
 
   const loadAccount = useCallback(async (activeToken: string) => {
     try {
@@ -184,36 +314,6 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
     return () => { cancelled = true; };
   }, [open, player, preferredVenueId]);
 
-  useEffect(() => {
-    const query = opponentQuery.trim().replace(/^@/, "");
-    if (!open || !showMatchForm || !token || !opponentSearchOpen || !query) return;
-
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      void api<PlayerSearchEntry[]>(`/players/search?q=${encodeURIComponent(query)}`, {}, token)
-        .then((results) => {
-          if (!cancelled) {
-            setOpponentResults(results);
-            setOpponentSearchError(false);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setOpponentResults([]);
-            setOpponentSearchError(true);
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setOpponentSearchBusy(false);
-        });
-    }, 250);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [open, opponentQuery, opponentSearchOpen, showMatchForm, token]);
-
   const selectedVenue = venues.find((venue) => venue.id === selectedVenueId) || null;
   const myStanding = player ? leaderboard.find((entry) => entry.player_id === player.id) : null;
   const leaderboardRows = [
@@ -273,15 +373,20 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
     setBusy(true);
     setError("");
     const form = new FormData(event.currentTarget);
+    const cleanUsername = (field: string) => String(form.get(field) || "").replace(/^@/, "");
     try {
       const created = await api<RallyMatch>("/matches", {
         method: "POST",
         body: JSON.stringify({
-          format: "S",
+          format: matchFormat,
           played_at: new Date().toISOString(),
           venue: venues.find((venue) => venue.id === form.get("venue_id"))?.name || null,
-          team1_phones: [player.username],
-          team2_phones: [String(form.get("opponent") || "").replace(/^@/, "")],
+          team1_phones: matchFormat === "D"
+            ? [player.username, cleanUsername("teammate")]
+            : [player.username],
+          team2_phones: matchFormat === "D"
+            ? [cleanUsername("opponent_1"), cleanUsername("opponent_2")]
+            : [cleanUsername("opponent_1")],
           games: [{
             game_no: 1,
             team1_points: Number(form.get("my_score")),
@@ -291,9 +396,7 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
       }, token);
       setMatches((current) => [created, ...current]);
       setShowMatchForm(false);
-      setOpponentQuery("");
-      setOpponentResults([]);
-      setOpponentSearchOpen(false);
+      setMatchFormat("S");
     } catch (matchError) {
       setError(matchError instanceof Error ? matchError.message : "Unable to submit this match.");
     } finally {
@@ -373,48 +476,6 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
     setChallenges([]);
     setNeedsProfile(false);
     setError("");
-  }
-
-  function updateOpponentQuery(value: string) {
-    setOpponentQuery(value);
-    setOpponentSearchOpen(true);
-    setOpponentSearchError(false);
-    setActiveOpponentIndex(-1);
-    if (value.trim().replace(/^@/, "")) {
-      setOpponentSearchBusy(true);
-    } else {
-      setOpponentSearchBusy(false);
-      setOpponentResults([]);
-    }
-  }
-
-  function selectOpponent(opponent: PlayerSearchEntry) {
-    setOpponentQuery(`@${opponent.username}`);
-    setOpponentResults([]);
-    setOpponentSearchOpen(false);
-    setOpponentSearchBusy(false);
-    setOpponentSearchError(false);
-    setActiveOpponentIndex(-1);
-  }
-
-  function handleOpponentKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Escape" && opponentSearchOpen) {
-      event.preventDefault();
-      event.stopPropagation();
-      setOpponentSearchOpen(false);
-      return;
-    }
-    if (!opponentSearchOpen || opponentResults.length === 0) return;
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setActiveOpponentIndex((current) => (current + 1) % opponentResults.length);
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setActiveOpponentIndex((current) => current <= 0 ? opponentResults.length - 1 : current - 1);
-    } else if (event.key === "Enter" && activeOpponentIndex >= 0) {
-      event.preventDefault();
-      selectOpponent(opponentResults[activeOpponentIndex]);
-    }
   }
 
   return (
@@ -558,58 +619,19 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
 
           {showMatchForm && (
             <form className="app-form match-form" onSubmit={submitMatch}>
-              <div className="match-form-head"><div><small>NEW SINGLES RESULT</small><h3>Log the score</h3></div><button type="button" onClick={() => setShowMatchForm(false)}>×</button></div>
-              <div
-                className="opponent-picker"
-                onBlur={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) setOpponentSearchOpen(false);
-                }}
-              >
-                <label htmlFor="opponent-username">Opponent username</label>
-                <input
-                  id="opponent-username"
-                  name="opponent"
-                  required
-                  autoComplete="off"
-                  placeholder="Search username or player name"
-                  value={opponentQuery}
-                  role="combobox"
-                  aria-autocomplete="list"
-                  aria-expanded={opponentSearchOpen}
-                  aria-controls="opponent-results"
-                  aria-activedescendant={activeOpponentIndex >= 0 ? `opponent-option-${opponentResults[activeOpponentIndex]?.id}` : undefined}
-                  onChange={(event) => updateOpponentQuery(event.target.value)}
-                  onFocus={() => setOpponentSearchOpen(true)}
-                  onKeyDown={handleOpponentKeyDown}
-                />
-                {opponentSearchOpen && (
-                  <div className="opponent-results" id="opponent-results" role="listbox" aria-label="Matching Rally players">
-                    {!opponentQuery.trim() && <p>Start typing to find a registered player.</p>}
-                    {opponentQuery.trim() && opponentSearchBusy && <p role="status">Finding players…</p>}
-                    {opponentQuery.trim() && !opponentSearchBusy && opponentSearchError && <p>Player search is unavailable. Try again.</p>}
-                    {opponentQuery.trim() && !opponentSearchBusy && !opponentSearchError && opponentResults.length === 0 && <p>No matching players found.</p>}
-                    {!opponentSearchBusy && opponentResults.map((opponent, index) => (
-                      <button
-                        type="button"
-                        id={`opponent-option-${opponent.id}`}
-                        role="option"
-                        aria-selected={activeOpponentIndex === index}
-                        className={activeOpponentIndex === index ? "active" : ""}
-                        key={opponent.id}
-                        onMouseEnter={() => setActiveOpponentIndex(index)}
-                        onClick={() => selectOpponent(opponent)}
-                      >
-                        <span className="opponent-avatar" aria-hidden="true">{opponent.display_name.slice(0, 1).toUpperCase()}</span>
-                        <span><b>{opponent.display_name}</b><small>@{opponent.username}</small></span>
-                        <i>Choose</i>
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="match-form-head"><div><small>NEW {matchFormat === "D" ? "DOUBLES" : "SINGLES"} RESULT</small><h3>Log the score</h3></div><button type="button" onClick={() => setShowMatchForm(false)}>×</button></div>
+              <div className="match-format-picker" role="group" aria-label="Match format">
+                <button type="button" className={matchFormat === "S" ? "active" : ""} aria-pressed={matchFormat === "S"} onClick={() => setMatchFormat("S")}><b>Singles</b><span>1 vs 1</span></button>
+                <button type="button" className={matchFormat === "D" ? "active" : ""} aria-pressed={matchFormat === "D"} onClick={() => setMatchFormat("D")}><b>Doubles</b><span>2 vs 2</span></button>
               </div>
-              <div className="score-inputs"><label>Your score<input name="my_score" type="number" min="0" max="30" required placeholder="21" /></label><b>:</b><label>Opponent<input name="opponent_score" type="number" min="0" max="30" required placeholder="17" /></label></div>
+              {matchFormat === "D" && <PlayerPicker label="Your teammate" name="teammate" token={token} />}
+              <div className={matchFormat === "D" ? "doubles-opponents" : ""}>
+                <PlayerPicker label={matchFormat === "D" ? "Opponent 1" : "Opponent username"} name="opponent_1" token={token} />
+                {matchFormat === "D" && <PlayerPicker label="Opponent 2" name="opponent_2" token={token} />}
+              </div>
+              <div className="score-inputs"><label>{matchFormat === "D" ? "Your team" : "Your score"}<input name="my_score" type="number" min="0" max="30" required placeholder="21" /></label><b>:</b><label>{matchFormat === "D" ? "Opponent team" : "Opponent"}<input name="opponent_score" type="number" min="0" max="30" required placeholder="17" /></label></div>
               <label>Venue <span>optional</span><select name="venue_id" value={selectedVenue?.id || ""} onChange={(event) => setSelectedVenueId(event.target.value)}><option value="">Venue not listed</option>{venues.map((venue) => <option value={venue.id} key={venue.id}>{venue.name} · {venue.area}</option>)}</select></label>
-              <p>The opponent will confirm this result before either rating changes.</p>
+              <p>One player from the opposing team will confirm this result before any rating changes.</p>
               <button className="app-primary" type="submit" disabled={busy}>{busy ? "Submitting…" : "Submit for confirmation →"}</button>
             </form>
           )}
@@ -617,13 +639,21 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
           <div className="match-history">
             <div className="match-history-head"><div><small>MATCH CENTRE</small><h3>Recent results</h3></div><span>{matches.length} total</span></div>
             {matches.length === 0 ? <div className="app-empty"><b>No matches yet.</b><p>Log your first score to start calibrating your rating.</p></div> : matches.map((match) => {
-              const opponent = match.participants.find((participant) => participant.player_id !== player.id);
               const currentParticipant = match.participants.find((participant) => participant.player_id === player.id);
+              const opponents = currentParticipant
+                ? match.participants.filter((participant) => participant.team !== currentParticipant.team)
+                : [];
+              const teammate = currentParticipant
+                ? match.participants.find((participant) => participant.team === currentParticipant.team && participant.player_id !== player.id)
+                : null;
+              const opponentNames = opponents.map((participant) => participant.display_name || participant.username || "Invited player").join(" & ");
               const game = match.games[0];
+              const myScore = game && currentParticipant?.team === 2 ? game.team2_points : game?.team1_points;
+              const opponentScore = game && currentParticipant?.team === 2 ? game.team1_points : game?.team2_points;
               return <article className="app-match-row" key={match.id}>
                 <span className={`match-status ${match.status}`}>{match.status}</span>
-                <div><b>vs. {opponent?.display_name || opponent?.username || "Invited player"}</b><small>{match.venue || "Venue not added"} · {new Date(match.played_at).toLocaleDateString()}</small></div>
-                <strong>{game ? `${game.team1_points}–${game.team2_points}` : "—"}</strong>
+                <div><b>{match.format === "D" && teammate ? `with ${teammate.display_name || teammate.username || "Invited teammate"} · ` : ""}vs. {opponentNames || "Invited player"}</b><small>{match.format === "D" ? "Doubles" : "Singles"} · {match.venue || "Venue not added"} · {new Date(match.played_at).toLocaleDateString()}</small></div>
+                <strong>{game ? `${myScore}–${opponentScore}` : "—"}</strong>
                 {match.status === "pending" && currentParticipant && (
                   <div className="match-actions">
                     {!currentParticipant.is_submitter && <button type="button" disabled={busy} onClick={() => void confirmMatch(match.id)}>Confirm</button>}
