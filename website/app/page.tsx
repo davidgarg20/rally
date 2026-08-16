@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import RallyApp from "./rally-app";
+import { venueFixtures } from "./venues";
 
 const appEnabled = import.meta.env.DEV || Boolean(import.meta.env.VITE_RALLY_API_URL);
 
@@ -30,10 +31,16 @@ export default function Home() {
   const [board, setBoard] = useState<keyof typeof leaderboard>("City");
   const [joined, setJoined] = useState(false);
   const [appOpen, setAppOpen] = useState(false);
+  const [preferredVenueId, setPreferredVenueId] = useState<string | null>(null);
 
   function submitWaitlist(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setJoined(true);
+  }
+
+  function openVenue(venueId: string) {
+    setPreferredVenueId(venueId);
+    setAppOpen(true);
   }
 
   return (
@@ -47,6 +54,7 @@ export default function Home() {
           <a href="#how">How it works</a>
           <a href="#ai-coach">AI Coach</a>
           <a href="#community">Leaderboards</a>
+          <a href="#venues">Courts</a>
           <a href="#organizers">For organizers</a>
           {appEnabled ? (
             <button className="nav-cta nav-app-button" type="button" onClick={() => setAppOpen(true)}>Open Rally</button>
@@ -238,6 +246,35 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="venue-section section-pad" id="venues">
+        <div className="venue-section-head">
+          <div>
+            <div className="section-kicker lime">Courts near you</div>
+            <h2>Pick a court.<br /><em>Find your game.</em></h2>
+          </div>
+          <div className="venue-section-intro">
+            <p>See nearby badminton venues, hourly prices, rated-night schedules and how many players around your level already play there.</p>
+            <span>Venue listings are free. Rally takes no cut from court fees.</span>
+          </div>
+        </div>
+        <div className="venue-grid">
+          {venueFixtures.map((venue, index) => (
+            <article className={`venue-card ${index === 0 ? "featured" : ""}`} key={venue.id}>
+              <div className="venue-card-top"><span>{String(index + 1).padStart(2, "0")}</span>{venue.rated_night && <b>RATED NIGHT · {venue.rated_night.toUpperCase()}</b>}</div>
+              <h3>{venue.name}</h3>
+              <p>{venue.area}</p>
+              <div className="venue-stats"><span><b>{venue.distance_km} km</b>away</span><span><b>{venue.courts}</b>courts</span><span><b>₹{venue.hourly_rate}</b>per hour</span></div>
+              <div className="venue-level"><strong>{venue.players_at_level}</strong><span>players near<br />your level</span></div>
+              {appEnabled ? (
+                <button type="button" onClick={() => openVenue(venue.id)}>Play here <span>↗</span></button>
+              ) : (
+                <a href="#waitlist">Join early access <span>↗</span></a>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="feature-bento section-pad">
         <article className="bento-intro"><div className="section-kicker">More than a number</div><h2>Your whole badminton life, <em>connected.</em></h2><p>One home for the matches you play, the people you meet and the progress you earn.</p></article>
         <article className="bento-card partner-card"><span className="bento-num">01</span><div className="radar"><i /><i /><i /><i /><b>YOU</b></div><h3>Find your next game</h3><p>Discover well-matched players within 5km, with real ratings and recent activity.</p></article>
@@ -295,7 +332,7 @@ export default function Home() {
         <div className="footer-links"><a href="#how">How it works</a><a href="#community">Leaderboards</a><a href="#organizers">Organizers</a><a href="#waitlist">Early access</a></div>
         <div className="footer-bottom"><span>© 2026 Rally</span><span>Built for the game we love.</span></div>
       </footer>
-      {appEnabled && <RallyApp open={appOpen} onClose={() => setAppOpen(false)} />}
+      {appEnabled && <RallyApp open={appOpen} onClose={() => setAppOpen(false)} preferredVenueId={preferredVenueId} />}
     </main>
   );
 }

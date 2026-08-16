@@ -9,6 +9,7 @@ from app.internal.router import router as internal_router
 from app.leaderboard.router import router as leaderboard_router
 from app.matches.router import router as matches_router
 from app.players.router import router as players_router
+from app.venues.router import router as venues_router
 
 
 def create_app() -> FastAPI:
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
     app.include_router(players_router)
     app.include_router(matches_router)
     app.include_router(leaderboard_router)
+    app.include_router(venues_router)
     app.include_router(internal_router)
 
     @app.get("/healthz")

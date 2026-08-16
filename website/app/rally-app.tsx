@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { type Venue, venueFixtures } from "./venues";
 
 type Player = {
   id: string;
@@ -33,6 +34,7 @@ type RallyMatch = {
 type RallyAppProps = {
   open: boolean;
   onClose: () => void;
+  preferredVenueId?: string | null;
 };
 
 const apiUrl = (import.meta.env.VITE_RALLY_API_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -52,7 +54,7 @@ async function api<T>(path: string, init: RequestInit = {}, token?: string): Pro
   return body as T;
 }
 
-export default function RallyApp({ open, onClose }: RallyAppProps) {
+export default function RallyApp({ open, onClose, preferredVenueId = null }: RallyAppProps) {
   const [token, setToken] = useState(() =>
     typeof window === "undefined" ? "" : window.localStorage.getItem(tokenKey) || "",
   );
@@ -63,6 +65,8 @@ export default function RallyApp({ open, onClose }: RallyAppProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showMatchForm, setShowMatchForm] = useState(false);
+  const [venues, setVenues] = useState<Venue[]>(venueFixtures);
+  const [selectedVenueId, setSelectedVenueId] = useState(preferredVenueId || "");
 
   const loadAccount = useCallback(async (activeToken: string) => {
     try {
@@ -105,6 +109,30 @@ export default function RallyApp({ open, onClose }: RallyAppProps) {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [onClose, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void api<Venue[]>(`/venues?city=${encodeURIComponent(player?.home_city || "BLR")}`)
+      .then((availableVenues) => {
+        if (!cancelled && availableVenues.length > 0) setVenues(availableVenues);
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [open, player?.home_city]);
+
+  useEffect(() => {
+    if (!open || !preferredVenueId) return;
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      setSelectedVenueId(preferredVenueId);
+      if (player) setShowMatchForm(true);
+    });
+    return () => { cancelled = true; };
+  }, [open, player, preferredVenueId]);
+
+  const selectedVenue = venues.find((venue) => venue.id === selectedVenueId) || null;
 
   if (!open) return null;
 
@@ -164,7 +192,7 @@ export default function RallyApp({ open, onClose }: RallyAppProps) {
         body: JSON.stringify({
           format: "S",
           played_at: new Date().toISOString(),
-          venue: form.get("venue") || null,
+          venue: venues.find((venue) => venue.id === form.get("venue_id"))?.name || null,
           team1_phones: [player.username],
           team2_phones: [String(form.get("opponent") || "").replace(/^@/, "")],
           games: [{
@@ -204,6 +232,11 @@ export default function RallyApp({ open, onClose }: RallyAppProps) {
     setMatches([]);
     setNeedsProfile(false);
     setError("");
+  }
+
+  function chooseVenue(venueId: string) {
+    setSelectedVenueId(venueId);
+    setShowMatchForm(true);
   }
 
   return (
@@ -263,12 +296,29 @@ export default function RallyApp({ open, onClose }: RallyAppProps) {
             <article><small>VALIDATED MATCHES</small><strong>{player.matches_played}</strong><p>{player.matches_played < 5 ? `${5 - player.matches_played} more to enter leaderboards.` : "Leaderboard eligible."}</p></article>
           </div>
 
+          <section className="app-venues" aria-labelledby="app-venues-title">
+            <div className="app-venues-head">
+              <div><small>COURTS NEAR {player.home_city}</small><h3 id="app-venues-title">Pick where you played.</h3></div>
+              <p>Compare distance, price and rated nights. Selecting a court adds it directly to your match.</p>
+            </div>
+            <div className="app-venue-grid">
+              {venues.map((venue) => (
+                <article className={selectedVenueId === venue.id ? "selected" : ""} key={venue.id}>
+                  <div className="app-venue-title"><div><h4>{venue.name}</h4><span>{venue.area} · {venue.distance_km} km</span></div>{venue.rated_night && <b>RATED · {venue.rated_night.toUpperCase()}</b>}</div>
+                  <div className="app-venue-meta"><span>{venue.courts} courts</span><span>₹{venue.hourly_rate}/hr</span><span>{venue.players_at_level} at your level</span></div>
+                  <div className="app-venue-slots" aria-label={`Upcoming slots at ${venue.name}`}>{venue.slots.slice(0, 2).map((slot) => <span key={slot}>{slot}</span>)}</div>
+                  <button type="button" onClick={() => chooseVenue(venue.id)}>{selectedVenueId === venue.id ? "Selected ✓" : "Use this venue →"}</button>
+                </article>
+              ))}
+            </div>
+          </section>
+
           {showMatchForm && (
             <form className="app-form match-form" onSubmit={submitMatch}>
               <div className="match-form-head"><div><small>NEW SINGLES RESULT</small><h3>Log the score</h3></div><button type="button" onClick={() => setShowMatchForm(false)}>×</button></div>
               <label>Opponent username<input name="opponent" required placeholder="@sameerj" /></label>
               <div className="score-inputs"><label>Your score<input name="my_score" type="number" min="0" max="30" required placeholder="21" /></label><b>:</b><label>Opponent<input name="opponent_score" type="number" min="0" max="30" required placeholder="17" /></label></div>
-              <label>Venue <span>optional</span><input name="venue" placeholder="Koramangala Indoor Stadium" /></label>
+              <label>Venue <span>optional</span><select name="venue_id" value={selectedVenue?.id || ""} onChange={(event) => setSelectedVenueId(event.target.value)}><option value="">Venue not listed</option>{venues.map((venue) => <option value={venue.id} key={venue.id}>{venue.name} · {venue.area}</option>)}</select></label>
               <p>The opponent will confirm this result before either rating changes.</p>
               <button className="app-primary" type="submit" disabled={busy}>{busy ? "Submitting…" : "Submit for confirmation →"}</button>
             </form>
