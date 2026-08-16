@@ -20,6 +20,8 @@ type Participant = {
   display_name: string | null;
   team: number;
   is_submitter: boolean;
+  confirmed: boolean;
+  disputed: boolean;
 };
 
 type RallyMatch = {
@@ -269,6 +271,20 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
     }
   }
 
+  async function disputeMatch(matchId: string) {
+    if (!window.confirm("Invalidate this pending result? No player ratings will change.")) return;
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await api<RallyMatch>(`/matches/${matchId}/dispute`, { method: "POST" }, token);
+      setMatches((current) => current.map((match) => match.id === matchId ? updated : match));
+    } catch (disputeError) {
+      setError(disputeError instanceof Error ? disputeError.message : "Unable to reject this result.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function signOut() {
     window.localStorage.removeItem(tokenKey);
     setToken("");
@@ -378,7 +394,6 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
           {error && <p className="app-error dashboard-error" role="alert">{error}</p>}
           <div className="rating-dashboard-grid">
             <article className="dashboard-rating-card"><small>YOUR RALLY RATING</small><strong>{Math.round(player.rating)}</strong><div><span>Glicko‑2</span><span>{player.matches_played === 0 ? "Calibrating" : "Active"} ●</span></div></article>
-            <article><small>RATING DEVIATION</small><strong>±{Math.round(player.rd)}</strong><p>Gets smaller as your rating becomes more reliable.</p></article>
             <article><small>VALIDATED MATCHES</small><strong>{player.matches_played}</strong><p>{player.matches_played < 5 ? `${5 - player.matches_played} more to enter leaderboards.` : "Leaderboard eligible."}</p></article>
           </div>
 
@@ -467,7 +482,12 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
                 <span className={`match-status ${match.status}`}>{match.status}</span>
                 <div><b>vs. {opponent?.display_name || opponent?.username || "Invited player"}</b><small>{match.venue || "Venue not added"} · {new Date(match.played_at).toLocaleDateString()}</small></div>
                 <strong>{game ? `${game.team1_points}–${game.team2_points}` : "—"}</strong>
-                {match.status === "pending" && currentParticipant && !currentParticipant.is_submitter && <button type="button" disabled={busy} onClick={() => void confirmMatch(match.id)}>Confirm</button>}
+                {match.status === "pending" && currentParticipant && (
+                  <div className="match-actions">
+                    {!currentParticipant.is_submitter && <button type="button" disabled={busy} onClick={() => void confirmMatch(match.id)}>Confirm</button>}
+                    <button className="match-reject" type="button" disabled={busy} onClick={() => void disputeMatch(match.id)}>{currentParticipant.is_submitter ? "Cancel result" : "Reject result"}</button>
+                  </div>
+                )}
               </article>;
             })}
           </div>

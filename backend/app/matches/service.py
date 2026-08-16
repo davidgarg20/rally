@@ -1,20 +1,26 @@
 from __future__ import annotations
+
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.firebase import FirebaseIdentity
 from app.db.models import (
-    Match, MatchGame, MatchInvite, MatchParticipant, Player,
+    Match,
+    MatchGame,
+    MatchInvite,
+    MatchParticipant,
+    Player,
 )
 from app.errors import BadRequest, Conflict, Forbidden, NotFound
 from app.matches.schemas import MatchSubmit
 from app.matches.validators import match_winner
-from app.rating.service import apply_match_rating
 from app.players.service import get_by_firebase_uid
 from app.push import fcm
+from app.rating.service import apply_match_rating
 
 log = logging.getLogger(__name__)
 
@@ -287,12 +293,44 @@ async def confirm_match(
     await apply_match_rating(session, match, winning_team)
     await session.commit()
 
-    for mp, p in parts:
+    for _mp, p in parts:
         await fcm.send_to_uid(
             p.firebase_uid,
             title="Match validated",
             body="Your rating has been updated.",
             data={"match_id": str(match.id), "kind": "match_validated"},
+        )
+
+    return match
+
+
+async def dispute_match(
+    session: AsyncSession, ident: FirebaseIdentity, match_id: uuid.UUID
+) -> Match:
+    """Reject a pending result without changing any player ratings."""
+    me = await get_by_firebase_uid(session, ident.uid)
+    if not me:
+        raise NotFound("player not found", code="player_not_found")
+
+    match = await load_match(session, match_id)
+    if match.status != "pending":
+        raise Conflict(f"match is {match.status}", code="not_pending")
+
+    parts = await load_participants(session, match.id)
+    my_row = next((mp for mp, player in parts if player.id == me.id), None)
+    if my_row is None:
+        raise Forbidden("not a participant", code="not_a_participant")
+
+    my_row.disputed_at = datetime.now(UTC)
+    match.status = "disputed"
+    await session.commit()
+
+    for _mp, player in parts:
+        await fcm.send_to_uid(
+            player.firebase_uid,
+            title="Match result rejected",
+            body=f"{me.display_name} rejected this result. No ratings were changed.",
+            data={"match_id": str(match.id), "kind": "match_disputed"},
         )
 
     return match

@@ -1,13 +1,19 @@
 from __future__ import annotations
-import uuid
-from sqlalchemy import select
-from fastapi import APIRouter
 
-from app.deps import CurrentIdentity, DbSession
+import uuid
+
+from fastapi import APIRouter
+from sqlalchemy import select
+
 from app.db.models import RatingEvent
+from app.deps import CurrentIdentity, DbSession
 from app.matches import service
 from app.matches.schemas import (
-    GameOut, MatchOut, MatchSubmit, ParticipantOut, RatingDeltaOut,
+    GameOut,
+    MatchOut,
+    MatchSubmit,
+    ParticipantOut,
+    RatingDeltaOut,
 )
 
 router = APIRouter(prefix="/matches", tags=["matches"])
@@ -95,4 +101,10 @@ async def confirm(match_id: uuid.UUID, session: DbSession,
     m = await service.confirm_match(session, ident, match_id)
     return await _serialize(session, m)
 
+
+@router.post("/{match_id}/dispute", response_model=MatchOut)
+async def dispute(match_id: uuid.UUID, session: DbSession,
+                  ident: CurrentIdentity) -> MatchOut:
+    m = await service.dispute_match(session, ident, match_id)
+    return await _serialize(session, m)
 
