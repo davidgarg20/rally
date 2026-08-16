@@ -39,6 +39,19 @@ type PlayerSearchEntry = {
   display_name: string;
 };
 
+type LeaderboardEntry = {
+  rank: number;
+  player_id: string;
+  username: string;
+  display_name: string;
+  rating: number;
+  matches_played: number;
+};
+
+type LeaderboardResponse = {
+  entries: LeaderboardEntry[];
+};
+
 type RallyAppProps = {
   open: boolean;
   onClose: () => void;
@@ -68,6 +81,7 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
   );
   const [player, setPlayer] = useState<Player | null>(null);
   const [matches, setMatches] = useState<RallyMatch[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
   const [busy, setBusy] = useState(false);
@@ -87,8 +101,13 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
       const me = await api<Player>("/players/me", {}, activeToken);
       setPlayer(me);
       setNeedsProfile(false);
-      const recent = await api<RallyMatch[]>("/players/me/matches", {}, activeToken);
+      const [recent, standings] = await Promise.all([
+        api<RallyMatch[]>("/players/me/matches", {}, activeToken),
+        api<LeaderboardResponse>("/leaderboard?limit=100", {}, activeToken)
+          .catch(() => ({ entries: [] })),
+      ]);
       setMatches(recent);
+      setLeaderboard(standings.entries);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : "Unable to load your account.";
       if (message.toLowerCase().includes("player not found")) {
@@ -177,6 +196,11 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
   }, [open, opponentQuery, opponentSearchOpen, showMatchForm, token]);
 
   const selectedVenue = venues.find((venue) => venue.id === selectedVenueId) || null;
+  const myStanding = player ? leaderboard.find((entry) => entry.player_id === player.id) : null;
+  const leaderboardRows = [
+    ...leaderboard.slice(0, 5),
+    ...(myStanding && myStanding.rank > 5 ? [myStanding] : []),
+  ];
 
   if (!open) return null;
 
@@ -290,6 +314,7 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
     setToken("");
     setPlayer(null);
     setMatches([]);
+    setLeaderboard([]);
     setNeedsProfile(false);
     setError("");
   }
@@ -396,6 +421,26 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
             <article className="dashboard-rating-card"><small>YOUR RALLY RATING</small><strong>{Math.round(player.rating)}</strong><div><span>Glicko‑2</span><span>{player.matches_played === 0 ? "Calibrating" : "Active"} ●</span></div></article>
             <article><small>VALIDATED MATCHES</small><strong>{player.matches_played}</strong><p>{player.matches_played < 5 ? `${5 - player.matches_played} more to enter leaderboards.` : "Leaderboard eligible."}</p></article>
           </div>
+
+          <section className="app-leaderboard" aria-labelledby="app-leaderboard-title">
+            <div className="app-leaderboard-head">
+              <div><small>RALLY RANKINGS</small><h3 id="app-leaderboard-title">Leaderboard</h3></div>
+              <p>Players enter after five validated matches. Ratings update only after both sides confirm a result.</p>
+            </div>
+            <div className="app-leaderboard-labels" aria-hidden="true"><span>Rank / player</span><span>Matches</span><span>Rating</span></div>
+            {leaderboardRows.length === 0 ? (
+              <div className="app-leaderboard-empty"><b>The leaderboard is calibrating.</b><span>{player.matches_played < 5 ? `Complete ${5 - player.matches_played} more validated match${5 - player.matches_played === 1 ? "" : "es"} to qualify.` : "Eligible players will appear here as ratings settle."}</span></div>
+            ) : leaderboardRows.map((entry, index) => (
+              <article className={entry.player_id === player.id ? "is-you" : ""} key={entry.player_id}>
+                {index === 5 && <span className="leaderboard-gap" aria-hidden="true">•••</span>}
+                <strong>#{entry.rank}</strong>
+                <span className="leaderboard-player-avatar" aria-hidden="true">{entry.display_name.slice(0, 1).toUpperCase()}</span>
+                <div><b>{entry.display_name}{entry.player_id === player.id ? " · You" : ""}</b><small>@{entry.username}</small></div>
+                <span>{entry.matches_played}</span>
+                <b>{Math.round(entry.rating)}</b>
+              </article>
+            ))}
+          </section>
 
           <section className="app-venues" aria-labelledby="app-venues-title">
             <div className="app-venues-head">
