@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import RallyApp from "./rally-app";
 import { venueFixtures } from "./venues";
 
 const appEnabled = import.meta.env.DEV || Boolean(import.meta.env.VITE_RALLY_API_URL);
+const dashboardView = "dashboard";
 
 const leaderboard = {
   City: [
@@ -33,14 +34,43 @@ export default function Home() {
   const [appOpen, setAppOpen] = useState(false);
   const [preferredVenueId, setPreferredVenueId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const syncAppWithUrl = () => {
+      setAppOpen(new URLSearchParams(window.location.search).get("view") === dashboardView);
+    };
+    const timer = window.setTimeout(syncAppWithUrl, 0);
+    window.addEventListener("popstate", syncAppWithUrl);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("popstate", syncAppWithUrl);
+    };
+  }, []);
+
   function submitWaitlist(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setJoined(true);
   }
 
+  function openApp() {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("view") !== dashboardView) {
+      url.searchParams.set("view", dashboardView);
+      window.history.pushState({ ...window.history.state, rallyView: dashboardView }, "", url);
+    }
+    setAppOpen(true);
+  }
+
+  function closeApp() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("view");
+    window.history.replaceState({ ...window.history.state, rallyView: undefined }, "", url);
+    setPreferredVenueId(null);
+    setAppOpen(false);
+  }
+
   function openVenue(venueId: string) {
     setPreferredVenueId(venueId);
-    setAppOpen(true);
+    openApp();
   }
 
   return (
@@ -57,7 +87,7 @@ export default function Home() {
           <a href="#venues">Courts</a>
           <a href="#organizers">For organizers</a>
           {appEnabled ? (
-            <button className="nav-cta nav-app-button" type="button" onClick={() => setAppOpen(true)}>Open Rally</button>
+            <button className="nav-cta nav-app-button" type="button" onClick={openApp}>Open Rally</button>
           ) : (
             <a className="nav-cta" href="#waitlist">Join early access</a>
           )}
@@ -74,7 +104,7 @@ export default function Home() {
           </p>
           <div className="hero-actions">
             {appEnabled ? (
-              <button className="button primary hero-app-button" type="button" onClick={() => setAppOpen(true)}>Get your Rally rating <span>↗</span></button>
+              <button className="button primary hero-app-button" type="button" onClick={openApp}>Get your Rally rating <span>↗</span></button>
             ) : (
               <a className="button primary" href="#waitlist">Get your Rally rating <span>↗</span></a>
             )}
@@ -332,7 +362,7 @@ export default function Home() {
         <div className="footer-links"><a href="#how">How it works</a><a href="#community">Leaderboards</a><a href="#organizers">Organizers</a><a href="#waitlist">Early access</a></div>
         <div className="footer-bottom"><span>© 2026 Rally</span><span>Built for the game we love.</span></div>
       </footer>
-      {appEnabled && <RallyApp open={appOpen} onClose={() => setAppOpen(false)} preferredVenueId={preferredVenueId} />}
+      {appEnabled && <RallyApp open={appOpen} onClose={closeApp} preferredVenueId={preferredVenueId} />}
     </main>
   );
 }
