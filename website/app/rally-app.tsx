@@ -249,7 +249,6 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
       setOpponentQuery("");
       setOpponentResults([]);
       setOpponentSearchOpen(false);
-      event.currentTarget.reset();
     } catch (matchError) {
       setError(matchError instanceof Error ? matchError.message : "Unable to submit this match.");
     } finally {
