@@ -4,22 +4,22 @@ import { FormEvent, useState } from "react";
 
 const leaderboard = {
   City: [
-    ["1", "Vikram R.", "Indiranagar", "5.6214", "+0.18"],
-    ["2", "Ananya S.", "Koramangala", "5.4872", "+0.09"],
-    ["3", "Rohit K.", "HSR Layout", "5.3918", "+0.23"],
-    ["4", "Meera N.", "Whitefield", "5.2741", "+0.06"],
+    ["1", "Vikram R.", "Indiranagar", "2042", "+22"],
+    ["2", "Ananya S.", "Koramangala", "1988", "+14"],
+    ["3", "Rohit K.", "HSR Layout", "1946", "+31"],
+    ["4", "Meera N.", "Whitefield", "1902", "+9"],
   ],
   Club: [
-    ["1", "Arjun P.", "PDC", "5.1023", "+0.14"],
-    ["2", "Sameer J.", "PDC", "4.9817", "+0.08"],
-    ["3", "Neha A.", "PDC", "4.8742", "+0.11"],
-    ["4", "Karan M.", "PDC", "4.7689", "+0.03"],
+    ["1", "Arjun P.", "PDC", "1874", "+20"],
+    ["2", "Sameer J.", "PDC", "1816", "+12"],
+    ["3", "Neha A.", "PDC", "1763", "+17"],
+    ["4", "Karan M.", "PDC", "1719", "+6"],
   ],
   Friends: [
-    ["1", "Arjun P.", "Your circle", "4.2871", "+0.12"],
-    ["2", "Riya T.", "Your circle", "4.2108", "+0.17"],
-    ["3", "Kabir D.", "Your circle", "4.0873", "+0.04"],
-    ["4", "Nisha V.", "Your circle", "3.9941", "+0.15"],
+    ["1", "Arjun P.", "Your circle", "1578", "+24"],
+    ["2", "Riya T.", "Your circle", "1546", "+27"],
+    ["3", "Kabir D.", "Your circle", "1512", "+8"],
+    ["4", "Nisha V.", "Your circle", "1479", "+19"],
   ],
 };
 
@@ -70,15 +70,15 @@ export default function Home() {
 
         <div className="hero-visual" aria-label="Rally player rating preview">
           <div className="court-lines" aria-hidden="true" />
-          <div className="rating-orbit orbit-one">+0.12</div>
+          <div className="rating-orbit orbit-one">+24</div>
           <div className="rating-orbit orbit-two">#12 BLR</div>
           <div className="phone-card">
             <div className="phone-top"><span>9:41</span><span>● ●●</span></div>
             <div className="app-heading"><span>Good morning, Arjun</span><b>•••</b></div>
             <div className="rating-panel">
               <span className="tiny-label">YOUR RALLY RATING</span>
-              <strong>4.2871</strong>
-              <div className="rating-meta"><span>↗ 0.12 this month</span><span>Reliable ●</span></div>
+              <strong>1578</strong>
+              <div className="rating-meta"><span>↗ 24 this month</span><span>Reliable ●</span></div>
               <div className="rating-bars" aria-hidden="true">
                 <i /><i /><i /><i /><i /><i /><i /><i /><i />
               </div>
@@ -88,15 +88,15 @@ export default function Home() {
               <span className="round-arrow">→</span>
             </div>
             <div className="recent-title"><b>Recent form</b><span>View all</span></div>
-            <div className="match-row"><span className="win">W</span><div><b>vs. Sameer &amp; Rohan</b><small>21–17, 19–21, 21–16</small></div><strong>+0.08</strong></div>
-            <div className="match-row"><span className="win">W</span><div><b>vs. Neha &amp; Vikram</b><small>21–14, 21–18</small></div><strong>+0.04</strong></div>
+            <div className="match-row"><span className="win">W</span><div><b>vs. Sameer &amp; Rohan</b><small>21–17, 19–21, 21–16</small></div><strong>+18</strong></div>
+            <div className="match-row"><span className="win">W</span><div><b>vs. Neha &amp; Vikram</b><small>21–14, 21–18</small></div><strong>+11</strong></div>
           </div>
         </div>
       </section>
 
       <section className="signal-strip" aria-label="Rally at a glance">
         <div><strong>200M+</strong><span>amateur players worldwide</span></div>
-        <div><strong>1</strong><span>validated match to start</span></div>
+        <div><strong>1500</strong><span>Glicko-2 starting rating</span></div>
         <div><strong>72h</strong><span>score validation window</span></div>
         <div><strong>5km</strong><span>level-based discovery radius</span></div>
       </section>
@@ -116,7 +116,7 @@ export default function Home() {
       <section className="how-section section-pad" id="how">
         <div className="section-heading">
           <div><div className="section-kicker">How Rally works</div><h2>Play. Prove it.<br />Find your level.</h2></div>
-          <p>Built on Glicko-2, Rally gets sharper as you play. It understands uncertainty, rewards consistent results and works even when your local badminton world is small.</p>
+          <p>Every player begins at 1500. Built on Glicko-2, Rally tracks rating uncertainty and gets sharper with each validated match—even when your local badminton world is small.</p>
         </div>
         <div className="steps-grid">
           <article className="step-card step-dark">
@@ -131,7 +131,7 @@ export default function Home() {
           </article>
           <article className="step-card step-paper">
             <div className="step-top"><span>03</span><span className="step-icon">↗</span></div>
-            <div className="number-jump"><small>NEW RATING</small><strong>4.2871</strong><span>+0.08</span></div>
+            <div className="number-jump"><small>NEW RATING</small><strong>1578</strong><span>+24</span></div>
             <h3>Watch your rating move</h3><p>See exactly how every performance shapes your Rally number.</p>
           </article>
         </div>
@@ -190,10 +190,10 @@ export default function Home() {
 
       <section className="level-section section-pad">
         <div className="section-kicker">A shared language for skill</div>
-        <div className="level-head"><h2>Know where you stand.<br /><em>Know where to go.</em></h2><p>Your rating is precise, but the experience is human. Rally makes every level easier to understand—and the next one feel within reach.</p></div>
+        <div className="level-head"><h2>Know where you stand.<br /><em>Know where to go.</em></h2><p>Your Glicko-2 rating starts at 1500 and becomes more reliable as you play. Skill bands keep the number easy to understand—and the next milestone within reach.</p></div>
         <div className="level-track">
-          <div className="track-line"><i style={{left: "55%"}} /><span style={{left: "55%"}}>YOU • 4.2871</span></div>
-          <div className="level-labels"><span><b>1.0</b>Beginner</span><span><b>2.5</b>Developing</span><span><b>4.0</b>Competitive</span><span><b>5.5</b>Advanced</span><span><b>7.0</b>Elite</span></div>
+          <div className="track-line"><i style={{left: "55%"}} /><span style={{left: "55%"}}>YOU • 1578</span></div>
+          <div className="level-labels"><span><b>&lt;1200</b>Beginner</span><span><b>1200</b>Developing</span><span><b>1500</b>Competitive</span><span><b>1800</b>Advanced</span><span><b>2100+</b>Elite</span></div>
         </div>
       </section>
 
@@ -222,7 +222,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div className="board-you"><span className="rank">12</span><span className="player-dot you-dot">YOU</span><div className="player-name"><b>You&apos;re closer than you think.</b><small>Play two more matches to climb.</small></div><div className="player-rating"><b>4.2871</b><small>+0.12</small></div></div>
+          <div className="board-you"><span className="rank">12</span><span className="player-dot you-dot">YOU</span><div className="player-name"><b>You&apos;re closer than you think.</b><small>Play two more matches to climb.</small></div><div className="player-rating"><b>1578</b><small>+24</small></div></div>
         </div>
       </section>
 
@@ -270,7 +270,7 @@ export default function Home() {
       <section className="faq-section section-pad">
         <div><div className="section-kicker">Good questions</div><h2>Before you<br /><em>step on court.</em></h2></div>
         <div className="faq-list">
-          <details><summary>How do I get my first rating?<span>＋</span></summary><p>Play and log one match against another Rally player. Once your opponent validates the score, you&apos;ll receive a starting rating that becomes more reliable with every result.</p></details>
+          <details><summary>How do I get my first rating?<span>＋</span></summary><p>Every player begins at 1500 with a high rating deviation. Play and log a match against another Rally player; once your opponent validates the score, Glicko-2 updates both your rating and its reliability.</p></details>
           <details><summary>Can I use Rally for doubles?<span>＋</span></summary><p>Yes. Rally is designed for both singles and doubles, the way amateur badminton is actually played.</p></details>
           <details><summary>What stops someone posting a fake score?<span>＋</span></summary><p>Every self-posted match needs confirmation from the opposing side. Players have a 72-hour window to validate or dispute the result.</p></details>
           <details><summary>Is Rally only for advanced players?<span>＋</span></summary><p>Not at all. Rally is most useful when it includes every level, from a first regular game to the strongest club competitors.</p></details>

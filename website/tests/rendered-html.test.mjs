@@ -12,6 +12,9 @@ test("exports the Rally landing page for the repository base path", async () => 
   assert.match(html, /deserves a/);
   assert.match(html, /Rally AI Coach/);
   assert.match(html, /Skill DNA/);
+  assert.match(html, /Glicko-2 starting rating/);
+  assert.match(html, /Every player begins at 1500/);
+  assert.doesNotMatch(html, /4\.2871|>1\.0<|>7\.0</);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
   assert.match(html, /https:\/\/davidgarg20\.github\.io\/rally\/og\.png/);
 
