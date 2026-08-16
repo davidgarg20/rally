@@ -52,6 +52,22 @@ type LeaderboardResponse = {
   entries: LeaderboardEntry[];
 };
 
+type ChallengePlayer = {
+  id: string;
+  username: string;
+  display_name: string;
+  rating: number;
+};
+
+type RallyChallenge = {
+  id: string;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  created_at: string;
+  responded_at: string | null;
+  challenger: ChallengePlayer;
+  challenged: ChallengePlayer;
+};
+
 type RallyAppProps = {
   open: boolean;
   onClose: () => void;
@@ -82,6 +98,7 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
   const [player, setPlayer] = useState<Player | null>(null);
   const [matches, setMatches] = useState<RallyMatch[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [challenges, setChallenges] = useState<RallyChallenge[]>([]);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
   const [busy, setBusy] = useState(false);
@@ -101,13 +118,15 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
       const me = await api<Player>("/players/me", {}, activeToken);
       setPlayer(me);
       setNeedsProfile(false);
-      const [recent, standings] = await Promise.all([
+      const [recent, standings, playerChallenges] = await Promise.all([
         api<RallyMatch[]>("/players/me/matches", {}, activeToken),
         api<LeaderboardResponse>("/leaderboard?limit=100", {}, activeToken)
           .catch(() => ({ entries: [] })),
+        api<RallyChallenge[]>("/challenges", {}, activeToken).catch(() => []),
       ]);
       setMatches(recent);
       setLeaderboard(standings.entries);
+      setChallenges(playerChallenges);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : "Unable to load your account.";
       if (message.toLowerCase().includes("player not found")) {
@@ -309,19 +328,51 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
     }
   }
 
+  async function createChallenge(opponentUsername: string) {
+    setBusy(true);
+    setError("");
+    try {
+      const created = await api<RallyChallenge>("/challenges", {
+        method: "POST",
+        body: JSON.stringify({ opponent_username: opponentUsername }),
+      }, token);
+      setChallenges((current) => [created, ...current]);
+    } catch (challengeError) {
+      setError(challengeError instanceof Error ? challengeError.message : "Unable to send this challenge.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function updateChallenge(
+    challengeId: string,
+    action: "accept" | "decline" | "cancel",
+  ) {
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await api<RallyChallenge>(`/challenges/${challengeId}/${action}`, {
+        method: "POST",
+      }, token);
+      setChallenges((current) => current.map((challenge) => (
+        challenge.id === challengeId ? updated : challenge
+      )));
+    } catch (challengeError) {
+      setError(challengeError instanceof Error ? challengeError.message : "Unable to update this challenge.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function signOut() {
     window.localStorage.removeItem(tokenKey);
     setToken("");
     setPlayer(null);
     setMatches([]);
     setLeaderboard([]);
+    setChallenges([]);
     setNeedsProfile(false);
     setError("");
-  }
-
-  function chooseVenue(venueId: string) {
-    setSelectedVenueId(venueId);
-    setShowMatchForm(true);
   }
 
   function updateOpponentQuery(value: string) {
@@ -427,36 +478,82 @@ export default function RallyApp({ open, onClose, preferredVenueId = null }: Ral
               <div><small>RALLY RANKINGS</small><h3 id="app-leaderboard-title">Leaderboard</h3></div>
               <p>Players enter after five validated matches. Ratings update only after both sides confirm a result.</p>
             </div>
-            <div className="app-leaderboard-labels" aria-hidden="true"><span>Rank / player</span><span>Matches</span><span>Rating</span></div>
+            <div className="app-leaderboard-labels" aria-hidden="true"><span>Rank / player</span><span>Matches</span><span>Rating</span><span>Action</span></div>
             {leaderboardRows.length === 0 ? (
               <div className="app-leaderboard-empty"><b>The leaderboard is calibrating.</b><span>{player.matches_played < 5 ? `Complete ${5 - player.matches_played} more validated match${5 - player.matches_played === 1 ? "" : "es"} to qualify.` : "Eligible players will appear here as ratings settle."}</span></div>
-            ) : leaderboardRows.map((entry, index) => (
-              <article className={entry.player_id === player.id ? "is-you" : ""} key={entry.player_id}>
-                {index === 5 && <span className="leaderboard-gap" aria-hidden="true">•••</span>}
-                <strong>#{entry.rank}</strong>
-                <span className="leaderboard-player-avatar" aria-hidden="true">{entry.display_name.slice(0, 1).toUpperCase()}</span>
-                <div><b>{entry.display_name}{entry.player_id === player.id ? " · You" : ""}</b><small>@{entry.username}</small></div>
-                <span>{entry.matches_played}</span>
-                <b>{Math.round(entry.rating)}</b>
-              </article>
-            ))}
+            ) : leaderboardRows.map((entry, index) => {
+              const pendingChallenge = challenges.find((challenge) => (
+                challenge.status === "pending"
+                && (challenge.challenger.id === entry.player_id || challenge.challenged.id === entry.player_id)
+              ));
+              return (
+                <article className={entry.player_id === player.id ? "is-you" : ""} key={entry.player_id}>
+                  {index === 5 && <span className="leaderboard-gap" aria-hidden="true">•••</span>}
+                  <strong>#{entry.rank}</strong>
+                  <span className="leaderboard-player-avatar" aria-hidden="true">{entry.display_name.slice(0, 1).toUpperCase()}</span>
+                  <div><b>{entry.display_name}{entry.player_id === player.id ? " · You" : ""}</b><small>@{entry.username}</small></div>
+                  <span className="leaderboard-match-count">{entry.matches_played}</span>
+                  <b className="leaderboard-rating">{Math.round(entry.rating)}</b>
+                  {entry.player_id === player.id ? (
+                    <span className="leaderboard-self">Your row</span>
+                  ) : (
+                    <button
+                      className="leaderboard-challenge-button"
+                      type="button"
+                      disabled={busy || Boolean(pendingChallenge)}
+                      onClick={() => void createChallenge(entry.username)}
+                    >
+                      {pendingChallenge ? "Pending" : "Challenge →"}
+                    </button>
+                  )}
+                </article>
+              );
+            })}
           </section>
 
-          <section className="app-venues" aria-labelledby="app-venues-title">
-            <div className="app-venues-head">
-              <div><small>COURTS NEAR {player.home_city}</small><h3 id="app-venues-title">Pick where you played.</h3></div>
-              <p>Compare distance, price and rated nights. Selecting a court adds it directly to your match.</p>
+          <section className="app-challenges" aria-labelledby="app-challenges-title">
+            <div className="app-challenges-head">
+              <div><small>GAME CHALLENGES</small><h3 id="app-challenges-title">Set up your next game.</h3></div>
+              <p>Challenge a player from the leaderboard, then accept or decline invitations here.</p>
+              <span>{challenges.filter((challenge) => challenge.status === "pending").length} pending</span>
             </div>
-            <div className="app-venue-grid">
-              {venues.map((venue) => (
-                <article className={selectedVenueId === venue.id ? "selected" : ""} key={venue.id}>
-                  <div className="app-venue-title"><div><h4>{venue.name}</h4><span>{venue.area} · {venue.distance_km} km</span></div>{venue.rated_night && <b>RATED · {venue.rated_night.toUpperCase()}</b>}</div>
-                  <div className="app-venue-meta"><span>{venue.courts} courts</span><span>₹{venue.hourly_rate}/hr</span><span>{venue.players_at_level} at your level</span></div>
-                  <div className="app-venue-slots" aria-label={`Upcoming slots at ${venue.name}`}>{venue.slots.slice(0, 2).map((slot) => <span key={slot}>{slot}</span>)}</div>
-                  <button type="button" onClick={() => chooseVenue(venue.id)}>{selectedVenueId === venue.id ? "Selected ✓" : "Use this venue →"}</button>
-                </article>
-              ))}
-            </div>
+            {challenges.length === 0 ? (
+              <div className="challenge-empty">
+                <span aria-hidden="true">↗</span>
+                <div><b>No challenges yet.</b><p>Choose any opponent from the leaderboard above to invite them to a game.</p></div>
+              </div>
+            ) : (
+              <div className="challenge-grid">
+                {challenges.slice(0, 8).map((challenge) => {
+                  const incoming = challenge.challenged.id === player.id;
+                  const opponent = incoming ? challenge.challenger : challenge.challenged;
+                  return (
+                    <article className={`challenge-card ${challenge.status}`} key={challenge.id}>
+                      <div className="challenge-card-head">
+                        <small>{incoming ? "INCOMING CHALLENGE" : "CHALLENGE SENT"}</small>
+                        <span>{challenge.status}</span>
+                      </div>
+                      <div className="challenge-player">
+                        <span aria-hidden="true">{opponent.display_name.slice(0, 1).toUpperCase()}</span>
+                        <div><b>{opponent.display_name}</b><small>@{opponent.username} · {Math.round(opponent.rating)} rating</small></div>
+                      </div>
+                      <p>{challenge.status === "accepted" ? "Game on — coordinate a court and time with your opponent." : `Sent ${new Date(challenge.created_at).toLocaleDateString()}`}</p>
+                      {challenge.status === "pending" && incoming && (
+                        <div className="challenge-actions">
+                          <button type="button" disabled={busy} onClick={() => void updateChallenge(challenge.id, "accept")}>Accept game</button>
+                          <button className="challenge-secondary" type="button" disabled={busy} onClick={() => void updateChallenge(challenge.id, "decline")}>Decline</button>
+                        </div>
+                      )}
+                      {challenge.status === "pending" && !incoming && (
+                        <div className="challenge-actions single">
+                          <button className="challenge-secondary" type="button" disabled={busy} onClick={() => void updateChallenge(challenge.id, "cancel")}>Cancel challenge</button>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {showMatchForm && (

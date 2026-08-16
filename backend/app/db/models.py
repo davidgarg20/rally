@@ -64,6 +64,31 @@ class UserAccount(Base):
     )
 
 
+class Challenge(Base):
+    __tablename__ = "challenges"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    challenger_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("players.id"), nullable=False
+    )
+    challenged_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("players.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("challenger_id <> challenged_id", name="challenge_players_differ_chk"),
+        CheckConstraint(
+            "status in ('pending','accepted','declined','cancelled')",
+            name="challenge_status_chk",
+        ),
+    )
+
+
 class Match(Base):
     __tablename__ = "matches"
 

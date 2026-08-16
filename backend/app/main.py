@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.router import router as auth_router
+from app.challenges.router import router as challenges_router
 from app.config import settings
 from app.deps import CurrentIdentity
 from app.errors import install_handlers
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(players_router)
     app.include_router(matches_router)
+    app.include_router(challenges_router)
     app.include_router(leaderboard_router)
     app.include_router(venues_router)
     app.include_router(internal_router)
